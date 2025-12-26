@@ -1,23 +1,22 @@
 <?php
 
-require_once "db.php";
+require_once 'db.php';
 
-$UniList = array ();
+$UniList = [];
 
-if ( file_exists ("config.php")) {
+if (file_exists('config.php')) {
 
-    require_once "config.php";
+    require_once 'config.php';
 
     // Connect to the database
-    dbconnect ($mdb_host, $mdb_user, $mdb_pass, $mdb_name);
+    dbconnect($mdb_host, $mdb_user, $mdb_pass, $mdb_name);
     dbquery("SET NAMES 'utf8';");
     dbquery("SET CHARACTER SET 'utf8';");
     dbquery("SET SESSION collation_connection = 'utf8_general_ci';");
 
-    $query = "SELECT * FROM unis ORDER BY num ASC";
-    $result = dbquery ($query);
-    while ( $row = dbarray ( $result ) ) {
+    $query = 'SELECT * FROM unis ORDER BY num ASC';
+    $result = dbquery($query);
+    while ($row = dbarray($result)) {
         $UniList[ $row['num'] ] = $row;
     }
 }
-
