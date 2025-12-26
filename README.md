@@ -2,6 +2,8 @@
 
 This is revived OGame v 0.84 with old design.
 
+Note: This fork is tested against PHP 8.*
+
 Need help with installation? Ask the community for help.
 Discord: https://discord.gg/xpCV3McAj2
 
