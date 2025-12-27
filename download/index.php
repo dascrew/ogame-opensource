@@ -21,59 +21,57 @@
  <table border="0" align="center" summary=""width=800px> 
 <?php
 
-$skins = array (
+$skins = [
     // shortname, longname, author, email
 
-    array ( "reloaded", "Reloaded", "g3ck0", "g3ck0@cnp-online.de" ) ,
-    array ( "allycpb", "Ally-CPB", "Poll@", "bla@blubb.de" ) ,
-    array ( "asgard", "Asgard", "Der Lapper", "bla@blubb.de" ) ,
-    array ( "aurora", "Aurora", "Diamond", "bla@blubb.de" ) ,
-    array ( "vampir", "Vampir", "Meistervampir", "Meistervampir@ogame-team.de" ) ,
-    array ( "allesnurgeklaut", "Allesnurgeklaut", "GaLAxY", "bla@blubb.de" ) ,
-    array ( "bluedream", "Bluedream", "eSpGhost", "bla@blubb.de" ) ,
-    array ( "bluegalaxy", "Bluegalaxy", "BigMuffl", "bla@blubb.de" ) ,
-    array ( "blue-mx", "Blue-MX", "Steryc", "bla@blubb.de" ) ,
-    array ( "brotstyle", "Brotstyle", "BrotUser", "bla@blubb.de" ) ,
-    array ( "dd", "DD", "DarkDragon", "bla@blubb.de" ) ,
-    array ( "eclipse", "Eclipse", "Dracon", "bla@blubb.de" ) ,
-    array ( "empire", "Empire", "Medhiv", "bla@blubb.de" ) ,
-    array ( "g3cko", "G3ck0", "g3ck0", "g3ck0@cnp-online.de" ) ,
-    array ( "gruen", "Gruen", "eSpGhost", "bla@blubb.de" ) ,
-    array ( "infraos", "Infraos", "oldi", "bla@blubb.de" ) ,
-    array ( "lambda", "Lambda", "Eseno", "bla@blubb.de" ) ,
-    array ( "lego", "Lego", "Nolte", "bla@blubb.de" ) ,
-    array ( "militaryskin", "Military", "Warhorse", "bla@blubb.de" ) ,
-    array ( "okno", "Okno", "oknoeno", "bla@blubb.de" ) ,
-    array ( "ovisiofarbig", "Ovisiofarbig", "TheMaze/Spyme", "bla@blubb.de" ) ,
-    array ( "ovisio", "Ovisio", "Spyme", "bla@blubb.de" ) ,
-    array ( "paint", "Paint", "Daggoth", "bla@blubb.de" ) ,
-    array ( "redfuturistisch", "Redfuturistisch", ".:Diamond:.", "bla@blubb.de" ) ,
-    array ( "redvision", "Redvision", "SyRuS", "bla@blubb.de" ) ,
-    array ( "shadowpato", "Shadowpato", "ShadowPato", "bla@blubb.de" ) ,
-    array ( "simpel", "Simpel", "janKG", "bla@blubb.de" ) ,
-    array ( "starwars", "Starwars", "Conan", "bla@blubb.de" ) ,
-    array ( "w4wooden4ce", "W4wooden4ce", "[W4]hoLogramm", "bla@blubb.de" ) ,
-    array ( "xonic", "Xonic", "xonic", "bla@blubb.de" ) ,
-    array ( "skin1", "1 Skin", "Piratentunte", "bla@blubb.de" ) ,
-    array ( "brace", "Brace", "BraCe", "bla@blubb.de" ) ,
-    array ( "bluechaos", "Bluechaos", "002", "bla@blubb.de" ) ,
-    array ( "epicblue", "Epicblue", "", "bla@blubb.de" ) ,
-    array ( "quadratorstyle", "Quadrator Style", "Quadrator", "Quadrator@gmx.net" ) ,
-    array ( "real", "Real", "Thanos", "tobi@tobiweb.de" ) ,
-    array ( "blueplanet", "BluePlanet", "Mic2003", "mic2003-skin@lycos.de" ) ,
-    array ( "", "", "", "bla@blubb.de" ) ,
+     [ 'reloaded', 'Reloaded', 'g3ck0', 'g3ck0@cnp-online.de' ] ,
+     [ 'allycpb', 'Ally-CPB', 'Poll@', 'bla@blubb.de' ] ,
+     [ 'asgard', 'Asgard', 'Der Lapper', 'bla@blubb.de' ] ,
+     [ 'aurora', 'Aurora', 'Diamond', 'bla@blubb.de' ] ,
+     [ 'vampir', 'Vampir', 'Meistervampir', 'Meistervampir@ogame-team.de' ] ,
+     [ 'allesnurgeklaut', 'Allesnurgeklaut', 'GaLAxY', 'bla@blubb.de' ] ,
+     [ 'bluedream', 'Bluedream', 'eSpGhost', 'bla@blubb.de' ] ,
+     [ 'bluegalaxy', 'Bluegalaxy', 'BigMuffl', 'bla@blubb.de' ] ,
+     [ 'blue-mx', 'Blue-MX', 'Steryc', 'bla@blubb.de' ] ,
+     [ 'brotstyle', 'Brotstyle', 'BrotUser', 'bla@blubb.de' ] ,
+     [ 'dd', 'DD', 'DarkDragon', 'bla@blubb.de' ] ,
+     [ 'eclipse', 'Eclipse', 'Dracon', 'bla@blubb.de' ] ,
+     [ 'empire', 'Empire', 'Medhiv', 'bla@blubb.de' ] ,
+     [ 'g3cko', 'G3ck0', 'g3ck0', 'g3ck0@cnp-online.de' ] ,
+     [ 'gruen', 'Gruen', 'eSpGhost', 'bla@blubb.de' ] ,
+     [ 'infraos', 'Infraos', 'oldi', 'bla@blubb.de' ] ,
+     [ 'lambda', 'Lambda', 'Eseno', 'bla@blubb.de' ] ,
+     [ 'lego', 'Lego', 'Nolte', 'bla@blubb.de' ] ,
+     [ 'militaryskin', 'Military', 'Warhorse', 'bla@blubb.de' ] ,
+     [ 'okno', 'Okno', 'oknoeno', 'bla@blubb.de' ] ,
+     [ 'ovisiofarbig', 'Ovisiofarbig', 'TheMaze/Spyme', 'bla@blubb.de' ] ,
+     [ 'ovisio', 'Ovisio', 'Spyme', 'bla@blubb.de' ] ,
+     [ 'paint', 'Paint', 'Daggoth', 'bla@blubb.de' ] ,
+     [ 'redfuturistisch', 'Redfuturistisch', '.:Diamond:.', 'bla@blubb.de' ] ,
+     [ 'redvision', 'Redvision', 'SyRuS', 'bla@blubb.de' ] ,
+     [ 'shadowpato', 'Shadowpato', 'ShadowPato', 'bla@blubb.de' ] ,
+     [ 'simpel', 'Simpel', 'janKG', 'bla@blubb.de' ] ,
+     [ 'starwars', 'Starwars', 'Conan', 'bla@blubb.de' ] ,
+     [ 'w4wooden4ce', 'W4wooden4ce', '[W4]hoLogramm', 'bla@blubb.de' ] ,
+     [ 'xonic', 'Xonic', 'xonic', 'bla@blubb.de' ] ,
+     [ 'skin1', '1 Skin', 'Piratentunte', 'bla@blubb.de' ] ,
+     [ 'brace', 'Brace', 'BraCe', 'bla@blubb.de' ] ,
+     [ 'bluechaos', 'Bluechaos', '002', 'bla@blubb.de' ] ,
+     [ 'epicblue', 'Epicblue', '', 'bla@blubb.de' ] ,
+     [ 'quadratorstyle', 'Quadrator Style', 'Quadrator', 'Quadrator@gmx.net' ] ,
+     [ 'real', 'Real', 'Thanos', 'tobi@tobiweb.de' ] ,
+     [ 'blueplanet', 'BluePlanet', 'Mic2003', 'mic2003-skin@lycos.de' ] ,
+     [ '', '', '', 'bla@blubb.de' ] ,
 
-);
+];
 
 $index = 0;
 
-foreach ( $skins as $i=>$skin )
-{
-    if ( $index == 0 )
-    {
+foreach ($skins as $i => $skin) {
+    if ($index == 0) {
         echo "	<tr> \n";
     }
-?>
+    ?>
 		<td > 
 			<table border="0" align="center" summary="" width=100%> 
 				<tr> 
@@ -89,7 +87,9 @@ foreach ( $skins as $i=>$skin )
 		</td> 
 <?php
 
-    if ($index == 1) echo "    </tr> \n";
+        if ($index == 1) {
+            echo "    </tr> \n";
+        }
     $index ^= 1;
 }
 
@@ -97,4 +97,4 @@ foreach ( $skins as $i=>$skin )
 
 </table> 
 </body> 
-</html> 
+</html>
