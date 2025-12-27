@@ -11,8 +11,7 @@
 <title>Скины ОГейм</title> 
 <meta name="author" content="Ringkeeper"> 
 <meta name="generator" content="2 Hï¿½nde, eine Tastatur, einen Kopf, nen Rechner, 20 Kippen, 3 Liter Kaffee,nen lieber Hend, ne sï¿½ï¿½e Icecoldbaby"> 
-</head> 
-</head> 
+ </head> 
 <body text="#FFFFFF" bgcolor=" #001746" link="#FFFFFF" alink="#FF0000" vlink="#FF0000" style="background-image:url(pic/background.gif);font-family:verdana;font-size:10px;"> 
 <br><font face="verdana" size="18" color="#FFFFFF"> <div align="center"> <h1>Скины для OGame</h1></font></div><br> 
 <br><font face="verdana" size="02" color="#FFFFFF"> <div align="center"> Большое спасибо NEFFE за программу предпросмотра скинов.</font></div><br> 
