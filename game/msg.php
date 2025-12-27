@@ -40,188 +40,193 @@ const MTYP_BATTLE_REPORT_TEXT = 6;      // battle report text
 // Each user has a post limit per day. The error "You have written too much today" is displayed.
 
 // Delete all old messages (called from the Messages menu)
-function DeleteExpiredMessages ($player_id, $days)
+function DeleteExpiredMessages($player_id, $days)
 {
     global $db_prefix;
-    $now = time ();
+    $now = time();
     $hours = 60 * 60 * 24 * $days;
 
     // Не удалять сообщения администрации.
-    $user = LoadUser ($player_id);
-    if ($user['admin'] > 0 ) return;
+    $user = LoadUser($player_id);
+    if ($user['admin'] > 0) {
+        return;
+    }
 
-    $query = "SELECT * FROM ".$db_prefix."messages WHERE owner_id = $player_id";
-    $result = dbquery ($query);
-    $num = dbrows ($result);
-    while ($num--)
-    {
-        $msg = dbarray ($result);
-        if ( ($msg['date'] + $hours) <= $now ) DeleteMessage ($player_id, $msg['msg_id']);
+    $query = 'SELECT * FROM ' . $db_prefix . "messages WHERE owner_id = $player_id";
+    $result = dbquery($query);
+    $num = dbrows($result);
+    while ($num--) {
+        $msg = dbarray($result);
+        if (($msg['date'] + $hours) <= $now) {
+            DeleteMessage($player_id, $msg['msg_id']);
+        }
     }
 }
 
 // Delete the oldest message (called from SendMessage)
-function DeleteOldestMessage ($player_id)
+function DeleteOldestMessage($player_id)
 {
     global $db_prefix;
-    $query = "SELECT * FROM ".$db_prefix."messages WHERE owner_id = $player_id ORDER BY date ASC";
-    $result = dbquery ($query);
-    $msg = dbarray ($result);
-    DeleteMessage ( $player_id, $msg['msg_id']);
+    $query = 'SELECT * FROM ' . $db_prefix . "messages WHERE owner_id = $player_id ORDER BY date ASC";
+    $result = dbquery($query);
+    $msg = dbarray($result);
+    DeleteMessage($player_id, $msg['msg_id']);
 }
 
 // Send Message. Returns the id of a new message. (can be called from anywhere); planet_id is used for spy reports.
-function SendMessage ($player_id, $from, $subj, $text, $pm, $when=0, $planet_id=0)
+function SendMessage($player_id, $from, $subj, $text, $pm, $when = 0, $planet_id = 0)
 {
     global $db_prefix;
 
-    if ($when == 0) $when = time ();
+    if ($when == 0) {
+        $when = time();
+    }
 
     // Handle parameters.
     if ($pm == 0) {
-        $text = mb_substr ($text, 0, 2000, "UTF-8");
+        $text = mb_substr($text, 0, 2000, 'UTF-8');
         //$text = bb ($text);
     }
 
     $text = addslashes($text);
 
     // Get the number of messages for the user.
-    $query = "SELECT * FROM ".$db_prefix."messages WHERE owner_id = $player_id";
-    $result = dbquery ($query);
-    if ( dbrows ($result) >= 127 )    // Delete the oldest message and make room for a new one.
-    {
-        DeleteOldestMessage ($player_id);
+    $query = 'SELECT * FROM ' . $db_prefix . "messages WHERE owner_id = $player_id";
+    $result = dbquery($query);
+    if (dbrows($result) >= 127) {    // Delete the oldest message and make room for a new one.
+        DeleteOldestMessage($player_id);
     }
 
     // Add message.
-    $msg = array( null, $player_id, $pm, $from, $subj, $text, 0, $when, $planet_id );
-    $id = AddDBRow ( $msg, "messages" );
+    $msg = [ null, $player_id, $pm, $from, $subj, $text, 0, $when, $planet_id ];
+    $id = AddDBRow($msg, 'messages');
 
     return $id;
 }
 
 // Delete message (called from the Messages menu)
-function DeleteMessage ($player_id, $msg_id)
+function DeleteMessage($player_id, $msg_id)
 {
     global $db_prefix;
-    $query = "DELETE FROM ".$db_prefix."messages WHERE owner_id = $player_id AND msg_id = $msg_id";
-    dbquery ($query);
+    $query = 'DELETE FROM ' . $db_prefix . "messages WHERE owner_id = $player_id AND msg_id = $msg_id";
+    dbquery($query);
 }
 
 // Load the last N messages (called from the Messages menu).
 // Do not load the text of battle reports
-function EnumMessages ($player_id, $max)
+function EnumMessages($player_id, $max)
 {
     global $db_prefix;
-    $query = "SELECT * FROM ".$db_prefix."messages WHERE owner_id = $player_id AND pm <> ".MTYP_BATTLE_REPORT_TEXT." ORDER BY date DESC, msg_id DESC LIMIT $max";
-    $result = dbquery ($query);
+    $query = 'SELECT * FROM ' . $db_prefix . "messages WHERE owner_id = $player_id AND pm <> " . MTYP_BATTLE_REPORT_TEXT . " ORDER BY date DESC, msg_id DESC LIMIT $max";
+    $result = dbquery($query);
     return $result;
 }
 
 // Get the number of unread messages (called from Overview)
-function UnreadMessages ($player_id, $filter=false, $pm=0)
+function UnreadMessages($player_id, $filter = false, $pm = 0)
 {
     global $db_prefix;
 
     // Add a condition for filtering (used to show the number of unread messages in a folder)
-    $filter_str = "";
+    $filter_str = '';
     if ($filter) {
         $filter_str = "AND pm = $pm";
     }
 
-    $query = "SELECT * FROM ".$db_prefix."messages WHERE owner_id = $player_id AND shown = 0 $filter_str";
-    $result = dbquery ($query);
-    return dbrows ($result);
+    $query = 'SELECT * FROM ' . $db_prefix . "messages WHERE owner_id = $player_id AND shown = 0 $filter_str";
+    $result = dbquery($query);
+    return dbrows($result);
 }
 
 // Mark a message as read (called from the Messages menu).
-function MarkMessage ($player_id, $msg_id)
+function MarkMessage($player_id, $msg_id)
 {
     global $db_prefix;
-    $query = "UPDATE ".$db_prefix."messages SET shown = 1 WHERE owner_id = $player_id AND msg_id = $msg_id";
-    dbquery ($query);
+    $query = 'UPDATE ' . $db_prefix . "messages SET shown = 1 WHERE owner_id = $player_id AND msg_id = $msg_id";
+    dbquery($query);
 }
 
 // Load the message.
-function LoadMessage ( $msg_id )
+function LoadMessage($msg_id)
 {
     global $db_prefix;
-    $query = "SELECT * FROM ".$db_prefix."messages WHERE msg_id = $msg_id";
-    $result = dbquery ($query);
-    if ( $result ) return dbarray ($result);
-    else return NULL;
+    $query = 'SELECT * FROM ' . $db_prefix . "messages WHERE msg_id = $msg_id";
+    $result = dbquery($query);
+    if ($result) {
+        return dbarray($result);
+    } else {
+        return null;
+    }
 }
 
 // Delete all messages
-function DeleteAllMessages ($player_id)
+function DeleteAllMessages($player_id)
 {
     global $db_prefix;
-    $query = "DELETE FROM ".$db_prefix."messages WHERE owner_id = $player_id";
-    dbquery ($query);
+    $query = 'DELETE FROM ' . $db_prefix . "messages WHERE owner_id = $player_id";
+    dbquery($query);
 }
 
 // Get msg_id of the shared spy report for the specified planet. If there is no report, return 0.
-function GetSharedSpyReport ($planet_id, $player_id, $ally_id)
+function GetSharedSpyReport($planet_id, $player_id, $ally_id)
 {
     global $db_prefix;
     if ($ally_id != 0) {
-        $sub_query = "SELECT player_id FROM ".$db_prefix."users WHERE ally_id = $ally_id";
-        $query = "SELECT * FROM ".$db_prefix."messages WHERE pm = 1 AND planet_id = $planet_id AND owner_id IN (".$sub_query.") ORDER BY date DESC LIMIT 1";
+        $sub_query = 'SELECT player_id FROM ' . $db_prefix . "users WHERE ally_id = $ally_id";
+        $query = 'SELECT * FROM ' . $db_prefix . "messages WHERE pm = 1 AND planet_id = $planet_id AND owner_id IN (" . $sub_query . ') ORDER BY date DESC LIMIT 1';
+    } else {
+        $query = 'SELECT * FROM ' . $db_prefix . "messages WHERE pm = 1 AND planet_id = $planet_id AND owner_id = $player_id ORDER BY date DESC LIMIT 1";
     }
-    else {
-        $query = "SELECT * FROM ".$db_prefix."messages WHERE pm = 1 AND planet_id = $planet_id AND owner_id = $player_id ORDER BY date DESC LIMIT 1";
-    }
-    $result = dbquery ($query);
-    if ( $result ) {
-        $msg = dbarray ($result);
-        return $msg['msg_id'];
+    $result = dbquery($query);
+    if ($result) {
+        $msg = dbarray($result);
+        if ($msg !== false && isset($msg['msg_id'])) {
+            return $msg['msg_id'];
+        }
     }
     return 0;
 }
 
 // Return the number of messages of a certain type (used to show the total number of messages in a folder)
-function TotalMessages ($player_id, $pm)
+function TotalMessages($player_id, $pm)
 {
     global $db_prefix;
-    $query = "SELECT * FROM ".$db_prefix."messages WHERE owner_id = $player_id AND pm = $pm";
-    $result = dbquery ($query);
-    return dbrows ($result);
+    $query = 'SELECT * FROM ' . $db_prefix . "messages WHERE owner_id = $player_id AND pm = $pm";
+    $result = dbquery($query);
+    return dbrows($result);
 }
 
-function ReportMessage ($player_id, $msg_id, &$ResultMessage="", &$ResultError="")
+function ReportMessage($player_id, $msg_id, &$ResultMessage = '', &$ResultError = '')
 {
     global $db_prefix;
     $id = 0;
-    $msg = LoadMessage ($msg_id);
+    $msg = LoadMessage($msg_id);
     if ($msg) {
         if ($msg['pm'] != MTYP_PM) {
-            Error ("User $player_id is attempting to report a non-private message. Admin check this smart guy.");
+            Error("User $player_id is attempting to report a non-private message. Admin check this smart guy.");
             return 0;
         }
         if ($msg['owner_id'] != $player_id) {
-            Error ("User $player_id is trying to report someone else's message. Admin check this smart guy.");
+            Error("User $player_id is trying to report someone else's message. Admin check this smart guy.");
             return 0;
         }
 
         // Check that such a message is not yet in the report history
-        $query = "SELECT * FROM ".$db_prefix."reports WHERE msg_id = $msg_id";
-        $result = dbquery ($query);
+        $query = 'SELECT * FROM ' . $db_prefix . "reports WHERE msg_id = $msg_id";
+        $result = dbquery($query);
         if (!$result) {
-            $ResultError = loca("MSG_REPORT_DB_ERROR");
+            $ResultError = loca('MSG_REPORT_DB_ERROR');
             return 0;
         }
-        if (dbrows ($result) == 0) {
+        if (dbrows($result) == 0) {
 
             // Add
-            $report = array( null, $player_id, $msg_id, $msg['msgfrom'], $msg['subj'], $msg['text'], $msg['date'] );
-            $id = AddDBRow ( $report, "reports" );
-            $ResultMessage = loca("MSG_REPORT_SUCCESS");
-        }
-        else {
-            $ResultError = loca("MSG_REPORT_EXISTS");
+            $report = [ null, $player_id, $msg_id, $msg['msgfrom'], $msg['subj'], $msg['text'], $msg['date'] ];
+            $id = AddDBRow($report, 'reports');
+            $ResultMessage = loca('MSG_REPORT_SUCCESS');
+        } else {
+            $ResultError = loca('MSG_REPORT_EXISTS');
         }
     }
     return $id;
 }
-
-?>

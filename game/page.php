@@ -5,61 +5,82 @@
 $pagetime = 0;
 
 // Get a small picture of the planet.
-function GetPlanetSmallImage ($skinpath, $planet)
+function GetPlanetSmallImage($skinpath, $planet)
 {
-    if ( $planet['type'] == PTYP_MOON || $planet['type'] == PTYP_DEST_MOON ) return $skinpath."planeten/small/s_mond.jpg";
-    else if ($planet['type'] == PTYP_DF) return $skinpath."planeten/debris.jpg";    
-    else if ($planet['type'] < PTYP_DF )
-    {
+    if ($planet['type'] == PTYP_MOON || $planet['type'] == PTYP_DEST_MOON) {
+        return $skinpath . 'planeten/small/s_mond.jpg';
+    } elseif ($planet['type'] == PTYP_DF) {
+        return $skinpath . 'planeten/debris.jpg';
+    } elseif ($planet['type'] < PTYP_DF) {
         $p = $planet['p'];
         $id = $planet['planet_id'] % 7 + 1;
-        if ($p <= 3) return sprintf ( "%splaneten/small/s_trockenplanet%02d.jpg", $skinpath, $id);
-        else if ($p >= 4 && $p <= 6) return sprintf ( "%splaneten/small/s_dschjungelplanet%02d.jpg", $skinpath, $id);
-        else if ($p >= 7 && $p <= 9) return sprintf ( "%splaneten/small/s_normaltempplanet%02d.jpg", $skinpath, $id);
-        else if ($p >= 10 && $p <= 12) return sprintf ( "%splaneten/small/s_wasserplanet%02d.jpg", $skinpath, $id);
-        else if ($p >= 13 && $p <= 15) return sprintf ( "%splaneten/small/s_eisplanet%02d.jpg", $skinpath, $id);
-        else return sprintf ( "%splaneten/small/s_eisplanet%02d.jpg", $skinpath, $id);
-    }
-    else return "img/admin_planets.png";        // Special objects of the galaxy (destroyed planets, etc.)
+        if ($p <= 3) {
+            return sprintf('%splaneten/small/s_trockenplanet%02d.jpg', $skinpath, $id);
+        } elseif ($p >= 4 && $p <= 6) {
+            return sprintf('%splaneten/small/s_dschjungelplanet%02d.jpg', $skinpath, $id);
+        } elseif ($p >= 7 && $p <= 9) {
+            return sprintf('%splaneten/small/s_normaltempplanet%02d.jpg', $skinpath, $id);
+        } elseif ($p >= 10 && $p <= 12) {
+            return sprintf('%splaneten/small/s_wasserplanet%02d.jpg', $skinpath, $id);
+        } elseif ($p >= 13 && $p <= 15) {
+            return sprintf('%splaneten/small/s_eisplanet%02d.jpg', $skinpath, $id);
+        } else {
+            return sprintf('%splaneten/small/s_eisplanet%02d.jpg', $skinpath, $id);
+        }
+    } else {
+        return 'img/admin_planets.png';
+    }        // Special objects of the galaxy (destroyed planets, etc.)
 }
 
 // Get a big picture of the planet.
-function GetPlanetImage ($skinpath, $planet)
+function GetPlanetImage($skinpath, $planet)
 {
-    if ( $planet['type'] == PTYP_MOON || $planet['type'] == PTYP_DEST_MOON ) return $skinpath."planeten/mond.jpg";
-    else if ($planet['type'] == PTYP_DF) return $skinpath."planeten/debris.jpg";
-    else if ($planet['type'] < PTYP_DF )
-    {
+    if ($planet['type'] == PTYP_MOON || $planet['type'] == PTYP_DEST_MOON) {
+        return $skinpath . 'planeten/mond.jpg';
+    } elseif ($planet['type'] == PTYP_DF) {
+        return $skinpath . 'planeten/debris.jpg';
+    } elseif ($planet['type'] < PTYP_DF) {
         $p = $planet['p'];
         $id = $planet['planet_id'] % 7 + 1;
-        if ($p <= 3) return sprintf ( "%splaneten/trockenplanet%02d.jpg", $skinpath, $id);
-        else if ($p >= 4 && $p <= 6) return sprintf ( "%splaneten/dschjungelplanet%02d.jpg", $skinpath, $id);
-        else if ($p >= 7 && $p <= 9) return sprintf ( "%splaneten/normaltempplanet%02d.jpg", $skinpath, $id);
-        else if ($p >= 10 && $p <= 12) return sprintf ( "%splaneten/wasserplanet%02d.jpg", $skinpath, $id);
-        else if ($p >= 13 && $p <= 15) return sprintf ( "%splaneten/eisplanet%02d.jpg", $skinpath, $id);
-        else return sprintf ( "%splaneten/eisplanet%02d.jpg", $skinpath, $id);
-    }
-    else return "img/admin_planets.png";        // Special objects of the galaxy (destroyed planets, etc.)
+        if ($p <= 3) {
+            return sprintf('%splaneten/trockenplanet%02d.jpg', $skinpath, $id);
+        } elseif ($p >= 4 && $p <= 6) {
+            return sprintf('%splaneten/dschjungelplanet%02d.jpg', $skinpath, $id);
+        } elseif ($p >= 7 && $p <= 9) {
+            return sprintf('%splaneten/normaltempplanet%02d.jpg', $skinpath, $id);
+        } elseif ($p >= 10 && $p <= 12) {
+            return sprintf('%splaneten/wasserplanet%02d.jpg', $skinpath, $id);
+        } elseif ($p >= 13 && $p <= 15) {
+            return sprintf('%splaneten/eisplanet%02d.jpg', $skinpath, $id);
+        } else {
+            return sprintf('%splaneten/eisplanet%02d.jpg', $skinpath, $id);
+        }
+    } else {
+        return 'img/admin_planets.png';
+    }        // Special objects of the galaxy (destroyed planets, etc.)
 }
 
-function UserSkin ()
+function UserSkin()
 {
     global $GlobalUser;
-    if ( key_exists('useskin', $GlobalUser) && $GlobalUser['useskin']) return $GlobalUser['skin'];
-    else return hostname () . "evolution/";
+    if (key_exists('useskin', $GlobalUser) && $GlobalUser['useskin']) {
+        return $GlobalUser['skin'];
+    } else {
+        return hostname() . 'evolution/';
+    }
 }
 
-function PageHeader ($page, $noheader=false, $leftmenu=true, $redirect_page="", $redirect_sec=0)
+function PageHeader($page, $noheader = false, $leftmenu = true, $redirect_page = '', $redirect_sec = 0)
 {
     global $pagetime;
     global $GlobalUser;
     global $GlobalUni;
 
-    BrowseHistory ();
+    BrowseHistory();
 
-    $mtime = microtime(); 
-    $mtime = explode(" ",$mtime); 
-    $mtime = $mtime[1] + $mtime[0]; 
+    $mtime = microtime();
+    $mtime = explode(' ', $mtime);
+    $mtime = $mtime[1] + $mtime[0];
     $pagetime = $mtime;
 
     $unitab = $GlobalUni;
@@ -69,14 +90,14 @@ function PageHeader ($page, $noheader=false, $leftmenu=true, $redirect_page="", 
     echo " <head>\n";
     echo "  <link rel='stylesheet' type='text/css' href='css/default.css' />\n";
     echo "  <link rel='stylesheet' type='text/css' href='css/formate.css' />\n";
-    echo "  <script language=\"JavaScript\">var session=\"".$GlobalUser['session']."\";</script>\n";
+    echo '  <script language="JavaScript">var session="' . $GlobalUser['session'] . "\";</script>\n";
     echo "  <meta http-equiv='content-type' content='text/html; charset=UTF-8' />\n";
-    if ( $redirect_page !== "" ) {
-        echo "  <meta http-equiv=\"refresh\" content=\"".$redirect_sec."; URL=index.php?page=".$redirect_page."&session=".$GlobalUser['session']."&redirect=1\">\n\n";
+    if ($redirect_page !== '') {
+        echo '  <meta http-equiv="refresh" content="' . $redirect_sec . '; URL=index.php?page=' . $redirect_page . '&session=' . $GlobalUser['session'] . "&redirect=1\">\n\n";
     }
     echo "<link rel='stylesheet' type='text/css' href='css/combox.css'>\n";
-    echo "<link rel='stylesheet' type='text/css' href='".UserSkin()."formate.css' />\n";
-    echo "<title>".va(loca("PAGE_TITLE"), $uni)."</title>\n";
+    echo "<link rel='stylesheet' type='text/css' href='" . UserSkin() . "formate.css' />\n";
+    echo '<title>' . va(loca('PAGE_TITLE'), $uni) . "</title>\n";
     echo "  <script src='js/utilities.js' type='text/javascript'></script>\n";
     echo "  <script language='JavaScript'>\n";
     echo "  </script>\n";
@@ -99,190 +120,212 @@ function PageHeader ($page, $noheader=false, $leftmenu=true, $redirect_page="", 
     echo "<body style='overflow: hidden;' onload='onBodyLoad();' onunload='' >\n";
     echo "<div id='overDiv' style='position:absolute; visibility:hidden; z-index:1000;'></div>\n";
 
-    if ($noheader == false)
-    {
+    if ($noheader == false) {
         echo "<div id='header_top'><center>\n";
         echo "<table class='header'>\n";
         echo "<tr class='header' >\n";
-        $aktplanet = GetPlanet ( $GlobalUser['aktplanet'] );
-        PlanetsDropList ($page);
-        ResourceList (floor($aktplanet['m']), floor($aktplanet['k']), floor($aktplanet['d']), $aktplanet['e'], $aktplanet['emax'], $GlobalUser['dm']+$GlobalUser['dmfree'], $aktplanet['mmax'], $aktplanet['kmax'], $aktplanet['dmax']);
-        $coma = OficeerList ();
+        $aktplanet = GetPlanet($GlobalUser['aktplanet']);
+        PlanetsDropList($page);
+        ResourceList(floor($aktplanet['m']), floor($aktplanet['k']), floor($aktplanet['d']), $aktplanet['e'], $aktplanet['emax'], $GlobalUser['dm'] + $GlobalUser['dmfree'], $aktplanet['mmax'], $aktplanet['kmax'], $aktplanet['dmax']);
+        $coma = OficeerList();
         echo "</tr>\n";
         echo "</table>\n";
         echo "</div><!-- END HEADER -->\n\n";
-    }
-    else 
-    {
-        $end = GetOfficerLeft ( $GlobalUser['player_id'], QTYP_COMMANDER_OFF );
-        $coma = $end > time ();
+    } else {
+        $end = GetOfficerLeft($GlobalUser['player_id'], QTYP_COMMANDER_OFF);
+        $coma = $end > time();
     }
 
     echo "<!-- LEFTMENU -->\n\n";
-    if ($leftmenu) LeftMenu ($coma);
+    if ($leftmenu) {
+        LeftMenu($coma);
+    }
     echo "<!-- END LEFTMENU -->\n\n";
 }
 
-function DropListHasMoon ($plist, $planet)
+function DropListHasMoon($plist, $planet)
 {
-    foreach ( $plist as $i=>$p )
-    {
-        if ( $p['type'] == PTYP_MOON ) {
-            if ( $p['g'] == $planet['g'] && $p['s'] == $planet['s'] && $p['p'] == $planet['p'] ) return $p;
+    foreach ($plist as $i => $p) {
+        if ($p['type'] == PTYP_MOON) {
+            if ($p['g'] == $planet['g'] && $p['s'] == $planet['s'] && $p['p'] == $planet['p']) {
+                return $p;
+            }
         }
     }
-    return NULL;
+    return null;
 }
 
-function PlanetsDropList ($page)
+function PlanetsDropList($page)
 {
     global $GlobalUser;
     $sess = $GlobalUser['session'];
-    $aktplanet = GetPlanet ( $GlobalUser['aktplanet'] );
-    $result = EnumPlanets ( $GlobalUser['player_id'] );
+    $aktplanet = GetPlanet($GlobalUser['aktplanet']);
+    $result = EnumPlanets($GlobalUser['player_id']);
 
     echo "<td class='header' style='width:5;' >\n";
     echo "<table class='header'>\n";
     echo "<tr class='header'>\n";
-    echo "<td class='header'><img src='".GetPlanetSmallImage(UserSkin(), $aktplanet)."' width='50' height='50'></td>\n";
+    echo "<td class='header'><img src='" . GetPlanetSmallImage(UserSkin(), $aktplanet) . "' width='50' height='50'></td>\n";
     echo "<td class='header'>\n";
     echo "<table class='header'>\n";
     echo "<select size='1' onchange='haha(this)'>\n";
 
-    $plist = array ();
-    $num = dbrows ($result);
-    for ($n=0; $n<$num; $n++) $plist[] = dbarray ($result);
+    $plist = [];
+    $num = dbrows($result);
+    for ($n = 0; $n < $num; $n++) {
+        $plist[] = dbarray($result);
+    }
 
-    $gid = $tid = $mode = "";
+    $gid = $tid = $mode = '';
 
-    if (key_exists ('gid', $_GET)) $gid = "&gid=".$_GET['gid'];
-    if (key_exists ('tid', $_GET)) $tid = "&tid=".$_GET['tid'];
-    if (key_exists ('mode', $_GET)) $mode = "&mode=".$_GET['mode'];
+    if (key_exists('gid', $_GET)) {
+        $gid = '&gid=' . $_GET['gid'];
+    }
+    if (key_exists('tid', $_GET)) {
+        $tid = '&tid=' . $_GET['tid'];
+    }
+    if (key_exists('mode', $_GET)) {
+        $mode = '&mode=' . $_GET['mode'];
+    }
 
-    for ($n=0; $n<$num; $n++)
-    {
+    for ($n = 0; $n < $num; $n++) {
         $planet = $plist[$n];
-        if ($planet['type'] == PTYP_MOON) continue;
+        if ($planet['type'] == PTYP_MOON) {
+            continue;
+        }
         $cp = $planet['planet_id'];
-        $sel = "";
-        if ($cp == $GlobalUser['aktplanet']) $sel = "selected";
-        $g = $planet['g']; $s = $planet['s']; $p = $planet['p'];
+        $sel = '';
+        if ($cp == $GlobalUser['aktplanet']) {
+            $sel = 'selected';
+        }
+        $g = $planet['g'];
+        $s = $planet['s'];
+        $p = $planet['p'];
         $name = $planet['name'];
-        echo "    <option value='index.php?page=".$page."&session=$sess&cp=$cp$gid$tid$mode' $sel>$name  <a href='index.php?page=galaxy&galaxy=$g&system=$s&position=$p&session=$sess&cp=$cp$gid$tid$mode' >[$g:$s:$p]</a></option>\n";
+        echo "    <option value='index.php?page=" . $page . "&session=$sess&cp=$cp$gid$tid$mode' $sel>$name  <a href='index.php?page=galaxy&galaxy=$g&system=$s&position=$p&session=$sess&cp=$cp$gid$tid$mode' >[$g:$s:$p]</a></option>\n";
 
-        $moon = DropListHasMoon ($plist, $planet);
+        $moon = DropListHasMoon($plist, $planet);
         if ($moon) {
             $planet = $moon;
             $cp = $planet['planet_id'];
-            $sel = "";
-            if ($cp == $GlobalUser['aktplanet']) $sel = "selected";
-            $g = $planet['g']; $s = $planet['s']; $p = $planet['p'];
+            $sel = '';
+            if ($cp == $GlobalUser['aktplanet']) {
+                $sel = 'selected';
+            }
+            $g = $planet['g'];
+            $s = $planet['s'];
+            $p = $planet['p'];
             $name = $planet['name'];
-            echo "    <option value='index.php?page=".$page."&session=$sess&cp=$cp$gid$tid$mode' $sel>$name  <a href='index.php?page=galaxy&galaxy=$g&system=$s&position=$p&session=$sess&cp=$cp$gid$tid$mode' >[$g:$s:$p]</a></option>\n";
+            echo "    <option value='index.php?page=" . $page . "&session=$sess&cp=$cp$gid$tid$mode' $sel>$name  <a href='index.php?page=galaxy&galaxy=$g&system=$s&position=$p&session=$sess&cp=$cp$gid$tid$mode' >[$g:$s:$p]</a></option>\n";
         }
     }
 
     echo "</select></table></td></tr></table></td>\n\n";
 }
 
-function ResourceList ($m, $k, $d, $enow, $emax, $dm, $mmax, $kmax, $dmax)
+function ResourceList($m, $k, $d, $enow, $emax, $dm, $mmax, $kmax, $dmax)
 {
     global $GlobalUser;
     $sess = $GlobalUser['session'];
 
-    $mcol = $kcol = $dcol = $ecol = "";
-    if ($m >= $mmax) $mcol = "color='#ff0000'";
-    if ($k >= $kmax) $kcol = "color='#ff0000'";
-    if ($d >= $dmax) $dcol = "color='#ff0000'";
-    if ($enow < 0) $ecol = "color='#ff0000'";
+    $mcol = $kcol = $dcol = $ecol = '';
+    if ($m >= $mmax) {
+        $mcol = "color='#ff0000'";
+    }
+    if ($k >= $kmax) {
+        $kcol = "color='#ff0000'";
+    }
+    if ($d >= $dmax) {
+        $dcol = "color='#ff0000'";
+    }
+    if ($enow < 0) {
+        $ecol = "color='#ff0000'";
+    }
 
     echo "<td class='header'><table class='header' id='resources' border='0' cellspacing='0' cellpadding='0' padding-right='30' >\n";
     echo "<tr class='header'>\n";
     echo "<td align='center' width='85' class='header'>\n";
-    echo "<img border='0' src='".UserSkin()."images/metall.gif' width='42' height='22'>\n</td>\n";
+    echo "<img border='0' src='" . UserSkin() . "images/metall.gif' width='42' height='22'>\n</td>\n";
     echo "<td align='center' width='85' class='header'>\n";
-    echo "<img border='0' src='".UserSkin()."images/kristall.gif' width='42' height='22'>\n</td>\n";
+    echo "<img border='0' src='" . UserSkin() . "images/kristall.gif' width='42' height='22'>\n</td>\n";
     echo "<td align='center' width='85' class='header'>\n";
-    echo "<img border='0' src='".UserSkin()."images/deuterium.gif' width='42' height='22'>\n</td>\n";
+    echo "<img border='0' src='" . UserSkin() . "images/deuterium.gif' width='42' height='22'>\n</td>\n";
     echo "<td align='center' width='85' class='header'>\n";
     echo "<a href=index.php?page=micropayment&session=$sess>\n";
-    echo "<img border='0' src='img/dm_klein_2.jpg' width='42' height='22' title='".loca("DM")."'></a>\n</td>\n";
+    echo "<img border='0' src='img/dm_klein_2.jpg' width='42' height='22' title='" . loca('DM') . "'></a>\n</td>\n";
     echo "<td align='center' width='85' class='header'>\n";
-    echo "<img border='0' src='".UserSkin()."images/energie.gif' width='42' height='22'>\n</td>\n</tr>\n";
+    echo "<img border='0' src='" . UserSkin() . "images/energie.gif' width='42' height='22'>\n</td>\n</tr>\n";
 
     echo "<tr class='header'>\n";
-    echo "    <td align='center' class='header' width='85'><i><b><font color='#ffffff'>".loca("METAL")."</font></b></i></td>\n";
-    echo "    <td align='center' class='header' width='85'><i><b><font color='#ffffff'>".loca("CRYSTAL")."</font></b></i></td>\n";
-    echo "    <td align='center' class='header' width='85'><i><b><font color='#ffffff'>".loca("DEUTERIUM")."</font></b></i></td>\n";
-    echo "    <td align='center' class='header' width='85'><i><b><font color='#ffffff'>".loca("DM")."</font></b></i></td>\n";
-    echo "    <td align='center' class='header' width='85'><i><b><font color='#ffffff'>".loca("ENERGY")."</font></b></i></td>\n";
+    echo "    <td align='center' class='header' width='85'><i><b><font color='#ffffff'>" . loca('METAL') . "</font></b></i></td>\n";
+    echo "    <td align='center' class='header' width='85'><i><b><font color='#ffffff'>" . loca('CRYSTAL') . "</font></b></i></td>\n";
+    echo "    <td align='center' class='header' width='85'><i><b><font color='#ffffff'>" . loca('DEUTERIUM') . "</font></b></i></td>\n";
+    echo "    <td align='center' class='header' width='85'><i><b><font color='#ffffff'>" . loca('DM') . "</font></b></i></td>\n";
+    echo "    <td align='center' class='header' width='85'><i><b><font color='#ffffff'>" . loca('ENERGY') . "</font></b></i></td>\n";
     echo "</tr>\n";
 
     echo "<tr class='header'>\n";
-    echo "    <td align='center' class='header' width='90'><font $mcol>".nicenum($m)."</font></td>\n";
-    echo "    <td align='center' class='header' width='90'><font $kcol>".nicenum($k)."</font></td>\n";
-    echo "    <td align='center' class='header' width='90'><font $dcol>".nicenum($d)."</font></td>\n";
-    echo "    <td align='center' class='header' width='90'><font color='#FFFFFF'>".nicenum($dm)."</font></td>\n";
-    echo "    <td align='center' class='header' width='90'><font $ecol>".nicenum($enow)."</font>/".nicenum($emax)."</td>\n\n";
+    echo "    <td align='center' class='header' width='90'><font $mcol>" . nicenum($m) . "</font></td>\n";
+    echo "    <td align='center' class='header' width='90'><font $kcol>" . nicenum($k) . "</font></td>\n";
+    echo "    <td align='center' class='header' width='90'><font $dcol>" . nicenum($d) . "</font></td>\n";
+    echo "    <td align='center' class='header' width='90'><font color='#FFFFFF'>" . nicenum($dm) . "</font></td>\n";
+    echo "    <td align='center' class='header' width='90'><font $ecol>" . nicenum($enow) . '</font>/' . nicenum($emax) . "</td>\n\n";
     echo "</tr>\n";
     echo "</table></td>\n";
 }
 
-function calco ($now, $qcmd, $who)
+function calco($now, $qcmd, $who)
 {
     global $GlobalUser;
-    $reply = array ();
-    $end = GetOfficerLeft ( $GlobalUser['player_id'], $qcmd[$who] );
+    $reply = [];
+    $end = GetOfficerLeft($GlobalUser['player_id'], $qcmd[$who]);
     if ($end <= $now) {
-        $reply['img'] = "_un";
+        $reply['img'] = '_un';
         $reply['days'] = '';
-        $reply['action'] = loca("PR_PURCHASE");
-    }
-    else
-    {
-        $d = ($end - $now) / (60*60*24);
-        if ( $d  > 0 )
-        {
-            $reply['days'] = va(loca("PR_ACTIVE_DAYS"), ceil($d));
-            $reply['action'] = loca("PR_RENEW");
+        $reply['action'] = loca('PR_PURCHASE');
+    } else {
+        $d = ($end - $now) / (60 * 60 * 24);
+        if ($d > 0) {
+            $reply['days'] = va(loca('PR_ACTIVE_DAYS'), ceil($d));
+            $reply['action'] = loca('PR_RENEW');
             $reply['img'] = '';
         }
     }
     return $reply;
 }
 
-function OficeerList ()
+function OficeerList()
 {
     global $GlobalUser;
     $sess = $GlobalUser['session'];
-    $img = array ( 'commander' => '', 'admiral' => '', 'engineer' => '', 'geologist' => '', 'technocrat' => '' );
-    $days = array ( 'commander' => '', 'admiral' => '', 'engineer' => '', 'geologist' => '', 'technocrat' => '' );
-    $action = array ( 'commander' => '', 'admiral' => '', 'engineer' => '', 'geologist' => '', 'technocrat' => '' );
-    $qcmd = array ( 'commander' => QTYP_COMMANDER_OFF, 'admiral' => QTYP_ADMIRAL_OFF, 'engineer' => QTYP_ENGINEER_OFF, 'geologist' => QTYP_GEOLOGE_OFF, 'technocrat' => QTYP_TECHNOCRATE_OFF);
+    $img = [ 'commander' => '', 'admiral' => '', 'engineer' => '', 'geologist' => '', 'technocrat' => '' ];
+    $days = [ 'commander' => '', 'admiral' => '', 'engineer' => '', 'geologist' => '', 'technocrat' => '' ];
+    $action = [ 'commander' => '', 'admiral' => '', 'engineer' => '', 'geologist' => '', 'technocrat' => '' ];
+    $qcmd = [ 'commander' => QTYP_COMMANDER_OFF, 'admiral' => QTYP_ADMIRAL_OFF, 'engineer' => QTYP_ENGINEER_OFF, 'geologist' => QTYP_GEOLOGE_OFF, 'technocrat' => QTYP_TECHNOCRATE_OFF];
 
-    $now = time ();
+    $now = time();
 
-    $reply = calco ($now, $qcmd, 'commander');
+    $reply = calco($now, $qcmd, 'commander');
     $img['commander'] = $reply['img'];
     $days['commander'] = $reply['days'];
     $action['commander'] = $reply['action'];
 
-    $reply = calco ($now, $qcmd, 'admiral');
+    $reply = calco($now, $qcmd, 'admiral');
     $img['admiral'] = $reply['img'];
     $days['admiral'] = $reply['days'];
     $action['admiral'] = $reply['action'];
 
-    $reply = calco ($now, $qcmd, 'engineer');
+    $reply = calco($now, $qcmd, 'engineer');
     $img['engineer'] = $reply['img'];
     $days['engineer'] = $reply['days'];
     $action['engineer'] = $reply['action'];
 
-    $reply = calco ($now, $qcmd, 'geologist');
+    $reply = calco($now, $qcmd, 'geologist');
     $img['geologist'] = $reply['img'];
     $days['geologist'] = $reply['days'];
     $action['geologist'] = $reply['action'];
 
-    $reply = calco ($now, $qcmd, 'technocrat');
+    $reply = calco($now, $qcmd, 'technocrat');
     $img['technocrat'] = $reply['img'];
     $days['technocrat'] = $reply['days'];
     $action['technocrat'] = $reply['action'];
@@ -292,35 +335,35 @@ function OficeerList ()
     echo "<tr class='header'>\n\n";
     echo "    <td align='center' width='35' class='header'>\n";
     echo "    <a href='index.php?page=micropayment&session=$sess' accesskey='o' >\n";
-    echo "	<img border='0' src='img/commander_ikon".$img['commander'].".gif' width='32' height='32' alt='".loca("PR_COMA")."'\n";
-    echo "	onmouseover=\"return overlib('<center><font size=1 color=white><b>".$days['commander']."<br>".loca("PR_COMA")."</font><br><br><a href=index.php?page=micropayment&session=$sess><font size=1 color=lime>".$action['commander']."</b></font></a></center>', LEFT, WIDTH, 150);\" onmouseout='return nd();'>\n";
+    echo "	<img border='0' src='img/commander_ikon" . $img['commander'] . ".gif' width='32' height='32' alt='" . loca('PR_COMA') . "'\n";
+    echo "	onmouseover=\"return overlib('<center><font size=1 color=white><b>" . $days['commander'] . '<br>' . loca('PR_COMA') . "</font><br><br><a href=index.php?page=micropayment&session=$sess><font size=1 color=lime>" . $action['commander'] . "</b></font></a></center>', LEFT, WIDTH, 150);\" onmouseout='return nd();'>\n";
     echo "    </a></td>\n\n";
     echo "    <td align='center' width='35' class='header'>\n";
     echo "    <a href='index.php?page=micropayment&session=$sess' accesskey='o' >\n";
-    echo "	<img border='0' src='img/admiral_ikon".$img['admiral'].".gif' width='32' height='32' alt='".loca("PR_ADMIRAL")."'\n";
-    echo "	onmouseover=\"return overlib('<center><font size=1 color=white><b>".$days['admiral']."<br>".loca("PR_ADMIRAL")."</font><br><font size=1 color=skyblue>".loca("PR_ADMIRAL_INFO")."</font><br><br><a href=index.php?page=micropayment&session=$sess><font size=1 color=lime>".$action['admiral']."</b></font></a></center>', LEFT, WIDTH, 150);\" onmouseout='return nd();'>\n";
+    echo "	<img border='0' src='img/admiral_ikon" . $img['admiral'] . ".gif' width='32' height='32' alt='" . loca('PR_ADMIRAL') . "'\n";
+    echo "	onmouseover=\"return overlib('<center><font size=1 color=white><b>" . $days['admiral'] . '<br>' . loca('PR_ADMIRAL') . '</font><br><font size=1 color=skyblue>' . loca('PR_ADMIRAL_INFO') . "</font><br><br><a href=index.php?page=micropayment&session=$sess><font size=1 color=lime>" . $action['admiral'] . "</b></font></a></center>', LEFT, WIDTH, 150);\" onmouseout='return nd();'>\n";
     echo "    </a></td>\n\n";
     echo "    <td align='center' width='35' class='header'>\n";
     echo "    <a href='index.php?page=micropayment&session=$sess' accesskey='o' >\n";
-    echo "	<img border='0' src='img/ingenieur_ikon".$img['engineer'].".gif' width='32' height='32' alt='".loca("PR_ENGINEER")."'\n";
-    echo "	onmouseover=\"return overlib('<center><font size=1 color=white><b>".$days['engineer']."<br>".loca("PR_ENGINEER")."</font><br><font size=1 color=skyblue>".loca("PR_ENGINEER_INFO")."</font><br><br><a href=index.php?page=micropayment&session=$sess><font size=1 color=lime>".$action['engineer']."</b></font></a></center>', LEFT, WIDTH, 150);\" onmouseout='return nd();'>\n";
+    echo "	<img border='0' src='img/ingenieur_ikon" . $img['engineer'] . ".gif' width='32' height='32' alt='" . loca('PR_ENGINEER') . "'\n";
+    echo "	onmouseover=\"return overlib('<center><font size=1 color=white><b>" . $days['engineer'] . '<br>' . loca('PR_ENGINEER') . '</font><br><font size=1 color=skyblue>' . loca('PR_ENGINEER_INFO') . "</font><br><br><a href=index.php?page=micropayment&session=$sess><font size=1 color=lime>" . $action['engineer'] . "</b></font></a></center>', LEFT, WIDTH, 150);\" onmouseout='return nd();'>\n";
     echo "    </a></td>\n\n";
     echo "    <td align='center' width='35' class='header'>\n";
     echo "    <a href='index.php?page=micropayment&session=$sess' accesskey='o' >\n";
-    echo "	<img border='0' src='img/geologe_ikon".$img['geologist'].".gif' width='32' height='32' alt='".loca("PR_GEOLOGIST")."'\n";
-    echo "	onmouseover=\"return overlib('<center><font size=1 color=white><b>".$days['geologist']."<br>".loca("PR_GEOLOGIST")."</font><br><font size=1 color=skyblue>".loca("PR_GEOLOGIST_INFO")."</font><br><br><a href=index.php?page=micropayment&session=$sess><font size=1 color=lime>".$action['geologist']."</b></font></a></center>', LEFT, WIDTH, 150);\" onmouseout='return nd();'>\n";
+    echo "	<img border='0' src='img/geologe_ikon" . $img['geologist'] . ".gif' width='32' height='32' alt='" . loca('PR_GEOLOGIST') . "'\n";
+    echo "	onmouseover=\"return overlib('<center><font size=1 color=white><b>" . $days['geologist'] . '<br>' . loca('PR_GEOLOGIST') . '</font><br><font size=1 color=skyblue>' . loca('PR_GEOLOGIST_INFO') . "</font><br><br><a href=index.php?page=micropayment&session=$sess><font size=1 color=lime>" . $action['geologist'] . "</b></font></a></center>', LEFT, WIDTH, 150);\" onmouseout='return nd();'>\n";
     echo "    </a></td>\n\n";
     echo "    <td align='center' width='35' class='header'>\n";
     echo "    <a href='index.php?page=micropayment&session=$sess' accesskey='o' >\n";
-    echo "	<img border='0' src='img/technokrat_ikon".$img['technocrat'].".gif' width='32' height='32' alt='".loca("PR_TECHNO")."'\n";
-    echo "	onmouseover=\"return overlib('<center><font size=1 color=white><b>".$days['technocrat']."<br>".loca("PR_TECHNO")."</font><br><font size=1 color=skyblue>".loca("PR_TECHNO_INFO")."</font><br><br><a href=index.php?page=micropayment&session=$sess><font size=1 color=lime>".$action['technocrat']."</b></font></a></center>', LEFT, WIDTH, 150);\" onmouseout='return nd();'>\n";
+    echo "	<img border='0' src='img/technokrat_ikon" . $img['technocrat'] . ".gif' width='32' height='32' alt='" . loca('PR_TECHNO') . "'\n";
+    echo "	onmouseover=\"return overlib('<center><font size=1 color=white><b>" . $days['technocrat'] . '<br>' . loca('PR_TECHNO') . '</font><br><font size=1 color=skyblue>' . loca('PR_TECHNO_INFO') . "</font><br><br><a href=index.php?page=micropayment&session=$sess><font size=1 color=lime>" . $action['technocrat'] . "</b></font></a></center>', LEFT, WIDTH, 150);\" onmouseout='return nd();'>\n";
     echo "    </a></td>\n\n";
     echo "<td align='center' class='header'></td></tr></table></td>\n\n";
 
     return $days['commander'] !== '';
 }
 
-function LeftMenu ($coma)
+function LeftMenu($coma)
 {
     global $GlobalUser;
     global $GlobalUni;
@@ -338,35 +381,34 @@ function LeftMenu ($coma)
     echo "</script>\n";
     echo "<center>\n\n";
     echo "<div id='menu'>\n";
-    echo "<a href='mailto:barrierefrei@ogame.de' title='".loca("MENU_DIS")."' style='width:1px;'></a>\n";
-    echo "<p style='width:110px;'><NOBR>".loca("MENU_UNIVERSE")." ".$uni." (<a href='index.php?page=changelog&session=".$sess."'>v 0.84</a>)</NOBR></p>\n";
+    echo "<a href='mailto:barrierefrei@ogame.de' title='" . loca('MENU_DIS') . "' style='width:1px;'></a>\n";
+    echo "<p style='width:110px;'><NOBR>" . loca('MENU_UNIVERSE') . ' ' . $uni . " (<a href='index.php?page=changelog&session=" . $sess . "'>v 0.84</a>)</NOBR></p>\n";
     echo "<table width='110' cellspacing='0' cellpadding='0'>\n";
     echo " <tr>\n";
-    echo "  <td><img src='".UserSkin()."gfx/ogame-produktion.jpg' width='110' height='40' /></td>\n";
+    echo "  <td><img src='" . UserSkin() . "gfx/ogame-produktion.jpg' width='110' height='40' /></td>\n";
     echo " </tr>\n\n";
     echo " <tr>\n";
     echo "  <td>\n";
     echo "   <div align='center'><font color='#FFFFFF'>\n";
-    echo "     <a href='index.php?page=overview&session=".$sess."' accesskey='".loca("HK_OVERVIEW")."'>".loca("MENU_OVERVIEW")."</a>\n";
+    echo "     <a href='index.php?page=overview&session=" . $sess . "' accesskey='" . loca('HK_OVERVIEW') . "'>" . loca('MENU_OVERVIEW') . "</a>\n";
     echo "    </font></div>\n";
     echo "  </td>\n";
     echo " </tr>\n\n";
-    if ( $GlobalUser['admin'] > 0 ) {
+    if ($GlobalUser['admin'] > 0) {
         echo " <tr>\n";
         echo "  <td>\n";
         echo "   <div align='center'><font color='#FFFFFF'>\n";
-        echo "     <a href='index.php?page=admin&session=".$sess."' >".loca("MENU_ADMIN")."</a>\n";
+        echo "     <a href='index.php?page=admin&session=" . $sess . "' >" . loca('MENU_ADMIN') . "</a>\n";
         echo "    </font></div>\n";
         echo "  </td>\n";
         echo " </tr>\n\n";
     }
 
-    if ( $coma )
-    {
+    if ($coma) {
         echo "  <tr>\n";
         echo "  <td>\n";
         echo "   <div align=\"center\"><font color=\"#FFFFFF\">\n";
-        echo "     <a href='index.php?page=imperium&session=$sess&planettype=1&no_header=1' accesskey=\"".loca("HK_EMPIRE")."\">".loca("MENU_EMPIRE")."</a>\n";
+        echo "     <a href='index.php?page=imperium&session=$sess&planettype=1&no_header=1' accesskey=\"" . loca('HK_EMPIRE') . '">' . loca('MENU_EMPIRE') . "</a>\n";
         echo "    </font></div>\n";
         echo "  </td>\n";
         echo " </tr>\n\n";
@@ -375,77 +417,77 @@ function LeftMenu ($coma)
     echo " <tr>\n";
     echo "  <td>\n";
     echo "   <div align='center'><font color='#FFFFFF'>\n";
-    echo "     <a href='index.php?page=b_building&session=".$sess."' accesskey='".loca("HK_BUILDING")."'>".loca("MENU_BUILDING")."</a>\n";
+    echo "     <a href='index.php?page=b_building&session=" . $sess . "' accesskey='" . loca('HK_BUILDING') . "'>" . loca('MENU_BUILDING') . "</a>\n";
     echo "    </font></div>\n";
     echo "  </td>\n";
     echo " </tr>\n\n";
     echo " <tr> \n";
     echo "  <td> \n";
     echo "   <div align=\"center\"><font color=\"#FFFFFF\"> \n";
-    echo "     <a href='index.php?page=resources&session=".$sess."' accesskey=\"".loca("HK_RESOURCES")."\">".loca("MENU_RESOURCES")."</a> \n";
+    echo "     <a href='index.php?page=resources&session=" . $sess . "' accesskey=\"" . loca('HK_RESOURCES') . '">' . loca('MENU_RESOURCES') . "</a> \n";
     echo "    </font></div> \n";
     echo "  </td> \n";
     echo " </tr> \n\n";
 
-?>
+    ?>
   <tr>
   <td>
    <div align="center" ><font color="#FFFFFF">
-     <a href='index.php?page=trader&session=<?=$sess;?>' accesskey=""><font color='FF8900'><?=loca("MENU_TRADER");?></font></a> <!-- TODO Loca Keys -->
+     <a href='index.php?page=trader&session=<?=$sess;?>' accesskey=""><font color='FF8900'><?=loca('MENU_TRADER');?></font></a> <!-- TODO Loca Keys -->
     </font></div>
   </td>
  </tr>
 <?php
 
-    echo " <tr> \n";
+        echo " <tr> \n";
     echo "  <td> \n";
     echo "   <div align=\"center\"><font color=\"#FFFFFF\"> \n";
-    echo "     <a href='index.php?page=buildings&session=".$sess."&mode=Forschung' accesskey=\"".loca("HK_RESEARCH")."\">".loca("MENU_RESEARCH")."</a> \n";
+    echo "     <a href='index.php?page=buildings&session=" . $sess . "&mode=Forschung' accesskey=\"" . loca('HK_RESEARCH') . '">' . loca('MENU_RESEARCH') . "</a> \n";
     echo "    </font></div> \n";
     echo "  </td> \n";
     echo " </tr> \n\n";
     echo " <tr> \n";
     echo "  <td> \n";
     echo "   <div align=\"center\"><font color=\"#FFFFFF\"> \n";
-    echo "     <a href='index.php?page=buildings&session=".$sess."&mode=Flotte' accesskey=\"".loca("HK_SHIPYARD")."\">".loca("MENU_SHIPYARD")."</a> \n";
+    echo "     <a href='index.php?page=buildings&session=" . $sess . "&mode=Flotte' accesskey=\"" . loca('HK_SHIPYARD') . '">' . loca('MENU_SHIPYARD') . "</a> \n";
     echo "    </font></div> \n";
     echo "  </td> \n";
     echo " </tr> \n\n";
     echo " <tr>\n";
     echo "  <td>\n";
     echo "   <div align=\"center\"><font color=\"#FFFFFF\">\n";
-    echo "     <a href='index.php?page=flotten1&session=$sess&mode=Flotte' accesskey=\"".loca("HK_FLEET")."\">".loca("MENU_FLEET")."</a>\n";
+    echo "     <a href='index.php?page=flotten1&session=$sess&mode=Flotte' accesskey=\"" . loca('HK_FLEET') . '">' . loca('MENU_FLEET') . "</a>\n";
     echo "    </font></div>\n";
     echo "  </td>\n";
     echo " </tr>\n\n";
     echo " <tr> \n";
     echo "  <td> \n";
     echo "   <div align=\"center\"><font color=\"#FFFFFF\"> \n";
-    echo "     <a href='index.php?page=techtree&session=".$sess."' accesskey=\"".loca("HK_TECHTREE")."\">".loca("MENU_TECHTREE")."</a> \n";
+    echo "     <a href='index.php?page=techtree&session=" . $sess . "' accesskey=\"" . loca('HK_TECHTREE') . '">' . loca('MENU_TECHTREE') . "</a> \n";
     echo "    </font></div> \n";
     echo "  </td> \n";
     echo " </tr>\n\n";
     echo " <tr>\n";
     echo "  <td>\n";
     echo "   <div align=\"center\"><font color=\"#FFFFFF\">\n";
-    echo "     <a href='index.php?page=galaxy&session=".$sess."&no_header=1' accesskey=\"".loca("HK_GALAXY")."\">".loca("MENU_GALAXY")."</a>\n";
+    echo "     <a href='index.php?page=galaxy&session=" . $sess . "&no_header=1' accesskey=\"" . loca('HK_GALAXY') . '">' . loca('MENU_GALAXY') . "</a>\n";
     echo "    </font></div>\n";
     echo "  </td>\n";
     echo " </tr>\n\n";
     echo " <tr> \n";
     echo "  <td> \n";
     echo "   <div align=\"center\"><font color=\"#FFFFFF\"> \n";
-    echo "     <a href='index.php?page=buildings&session=".$sess."&mode=Verteidigung' accesskey=\"".loca("HK_DEFENSE")."\">".loca("MENU_DEFENSE")."</a> \n";
+    echo "     <a href='index.php?page=buildings&session=" . $sess . "&mode=Verteidigung' accesskey=\"" . loca('HK_DEFENSE') . '">' . loca('MENU_DEFENSE') . "</a> \n";
     echo "    </font></div> \n";
     echo "  </td> \n";
     echo " </tr>\n\n";
     echo " <tr>\n";
-    echo "  <td><img src=\"".UserSkin()."gfx/info-help.jpg\" width=\"110\" height=\"19\"></td>\n";
+    echo '  <td><img src="' . UserSkin() . "gfx/info-help.jpg\" width=\"110\" height=\"19\"></td>\n";
     echo " </tr>\n\n";
     echo " <tr>\n";
     echo "  <td>\n";
     echo "   <div align=\"center\"><font color=\"#FFFFFF\">\n";
-    echo "     <a href='index.php?page=allianzen&session=".$sess."' accesskey=\"".loca("HK_ALLY")."\">".loca("MENU_ALLY")."</a>\n";
+    echo "     <a href='index.php?page=allianzen&session=" . $sess . "' accesskey=\"" . loca('HK_ALLY') . '">' . loca('MENU_ALLY') . "</a>\n";
     echo "    </font></div>\n";
     echo "  </td>\n";
     echo " </tr>\n\n";
@@ -454,40 +496,40 @@ function LeftMenu ($coma)
         echo "  <tr> \n";
         echo "  <td> \n";
         echo "   <div align=\"center\"><font color=\"#FFFFFF\"> \n";
-        echo "    <a href=\"".$unitab['ext_board']."\" target=\"_blank\" accesskey=\"".loca("HK_BOARD")."\" >".loca("MENU_BOARD")."</a><!-- external link to board --> \n";
+        echo '    <a href="' . $unitab['ext_board'] . '" target="_blank" accesskey="' . loca('HK_BOARD') . '" >' . loca('MENU_BOARD') . "</a><!-- external link to board --> \n";
         echo "   </font></div> \n";
         echo "  </td> \n";
         echo " </tr> \n\n";
     }
-    
+
     if (!empty($unitab['ext_discord'])) {
         echo " <tr>\n";
         echo "  <td>\n";
         echo "   <div align='center'><font color='#FFFFFF'>\n";
-        echo "     <a href=\"".$unitab['ext_discord']."\" target='_blank'>".loca("MENU_DISCORD")."</a> <!-- external link to Discord -->\n";
+        echo '     <a href="' . $unitab['ext_discord'] . "\" target='_blank'>" . loca('MENU_DISCORD') . "</a> <!-- external link to Discord -->\n";
         echo "   </font></div>\n";
         echo "  </td>\n";
         echo " </tr>\n\n";
-    }    
+    }
 
     echo "    <tr>\n";
     echo "       <td align=center>\n";
     echo "       <a id='darkmatter2' style='cursor:pointer; width:110px;'\n";
-    echo "         href='index.php?page=micropayment&session=".$sess."' accesskey=\"".loca("HK_PAYMENT")."\"><b>".loca("MENU_PAYMENT")."</a></b>\n";
+    echo "         href='index.php?page=micropayment&session=" . $sess . "' accesskey=\"" . loca('HK_PAYMENT') . '"><b>' . loca('MENU_PAYMENT') . "</a></b>\n";
     echo "       </div>\n";
     echo "      </td>\n";
     echo "     </tr>\n\n";
     echo " <tr>\n";
     echo "  <td>\n";
     echo "   <div align=\"center\"><font color=\"#FFFFFF\">\n";
-    echo "  <a href='index.php?page=statistics&session=$sess' accesskey=\"".loca("HK_STAT")."\">".loca("MENU_STAT")."</a>\n";
+    echo "  <a href='index.php?page=statistics&session=$sess' accesskey=\"" . loca('HK_STAT') . '">' . loca('MENU_STAT') . "</a>\n";
     echo "    </font></div>\n";
     echo "  </td>\n";
     echo " </tr>\n\n";
     echo " <tr>\n";
     echo "  <td>\n";
     echo "   <div align=\"center\"><font color=\"#FFFFFF\">\n";
-    echo "     <a href='index.php?page=suche&session=$sess' accesskey=\"".loca("HK_SEARCH")."\">".loca("MENU_SEARCH")."</a>\n";
+    echo "     <a href='index.php?page=suche&session=$sess' accesskey=\"" . loca('HK_SEARCH') . '">' . loca('MENU_SEARCH') . "</a>\n";
     echo "    </font></div>\n";
     echo "  </td>\n";
     echo " </tr>\n\n";
@@ -496,47 +538,47 @@ function LeftMenu ($coma)
         echo " <tr>\n";
         echo "  <td>\n";
         echo "   <div align=\"center\"><font color=\"#FFFFFF\">\n";
-        echo "    <a href=\"".$unitab['ext_tutorial']."\" target=\"_blank\" accesskey=\"".loca("HK_TUTORIAL")."\" >".loca("MENU_TUTORIAL")."</a><!-- external link to ogame tutorial -->\n";
+        echo '    <a href="' . $unitab['ext_tutorial'] . '" target="_blank" accesskey="' . loca('HK_TUTORIAL') . '" >' . loca('MENU_TUTORIAL') . "</a><!-- external link to ogame tutorial -->\n";
         echo "   </font></div>\n";
         echo "  </td>\n";
         echo " </tr>\n\n";
     }
 
     echo " <tr>\n";
-    echo "  <td><img src='".UserSkin()."gfx/user-menu.jpg' width='110' height='35'></td>\n";
+    echo "  <td><img src='" . UserSkin() . "gfx/user-menu.jpg' width='110' height='35'></td>\n";
     echo " </tr>\n\n";
     echo " <tr>\n";
     echo "  <td>\n";
     echo "   <div align=\"center\"><font color=\"#FFFFFF\">\n";
-    echo "     <a href='index.php?page=messages&dsp=1&session=".$sess."' accesskey=\"".loca("HK_MESSAGES")."\">".loca("MENU_MESSAGES")."</a>\n";
+    echo "     <a href='index.php?page=messages&dsp=1&session=" . $sess . "' accesskey=\"" . loca('HK_MESSAGES') . '">' . loca('MENU_MESSAGES') . "</a>\n";
     echo "    </font></div>\n";
     echo "  </td>\n";
     echo " </tr>\n\n";
     echo " <tr>\n";
     echo "  <td>\n";
     echo "   <div align=\"center\"><font color=\"#FFFFFF\">\n";
-    echo "     <a href='#' onclick='fenster(\"index.php?page=notizen&session=".$sess."&no_header=1\", \"Notizen\");' accesskey=\"".loca("HK_NOTES")."\">".loca("MENU_NOTES")."</a>\n";
+    echo "     <a href='#' onclick='fenster(\"index.php?page=notizen&session=" . $sess . "&no_header=1\", \"Notizen\");' accesskey=\"" . loca('HK_NOTES') . '">' . loca('MENU_NOTES') . "</a>\n";
     echo "    </font></div>\n";
     echo "  </td>\n";
     echo " </tr>\n\n";
     echo " <tr>\n";
     echo "  <td>\n";
     echo "   <div align=\"center\"><font color=\"#FFFFFF\">\n";
-    echo "     <a href='index.php?page=buddy&session=".$sess."' accesskey=\"".loca("HK_BUDDY")."\">".loca("MENU_BUDDY")."</a>\n";
+    echo "     <a href='index.php?page=buddy&session=" . $sess . "' accesskey=\"" . loca('HK_BUDDY') . '">' . loca('MENU_BUDDY') . "</a>\n";
     echo "    </font></div>\n";
     echo "  </td>\n";
     echo " </tr>\n\n";
     echo "  <tr>\n";
     echo "   <td>\n";
     echo "    <div align='center'><font color='#FFFFFF'>\n";
-    echo "      <a href='index.php?page=options&session=".$sess."' accesskey='".loca("HK_OPTIONS")."'>".loca("MENU_OPTIONS")."</a>\n";
+    echo "      <a href='index.php?page=options&session=" . $sess . "' accesskey='" . loca('HK_OPTIONS') . "'>" . loca('MENU_OPTIONS') . "</a>\n";
     echo "     </font></div>\n";
     echo "   </td>\n";
     echo "  </tr>\n\n";
     echo " <tr>\n";
     echo "  <td>\n";
     echo "   <div align='center'><font color='#FFFFFF'>\n";
-    echo "     <a href='index.php?page=logout&session=".$sess."' accesskey='".loca("HK_LOGOUT")."'>".loca("MENU_LOGOUT")."</a>\n";
+    echo "     <a href='index.php?page=logout&session=" . $sess . "' accesskey='" . loca('HK_LOGOUT') . "'>" . loca('MENU_LOGOUT') . "</a>\n";
     echo "    </font></div>\n";
     echo "  </td>\n";
     echo " </tr>\n\n";
@@ -545,17 +587,17 @@ function LeftMenu ($coma)
         echo " <tr>\n";
         echo "  <td>\n";
         echo "   <div align='center'><font color='#FFFFFF'>\n";
-        echo "     <a href=\"".$unitab['ext_rules']."\" target='_blank'>".loca("MENU_RULES")."</a> <!-- external link to rules -->\n";
+        echo '     <a href="' . $unitab['ext_rules'] . "\" target='_blank'>" . loca('MENU_RULES') . "</a> <!-- external link to rules -->\n";
         echo "   </font></div>\n";
         echo "  </td>\n";
         echo " </tr>\n\n";
     }
 
-    if (!empty($unitab['ext_impressum'])) {    
+    if (!empty($unitab['ext_impressum'])) {
         echo " <tr>\n";
         echo "  <td>\n";
         echo "   <div align='center'><font color='#FFFFFF'>\n";
-        echo "    <a href=\"".$unitab['ext_impressum']."\" target='_blank'>".loca("MENU_IMPRESSUM")."</a> <!-- external link to impressum -->\n";
+        echo '    <a href="' . $unitab['ext_impressum'] . "\" target='_blank'>" . loca('MENU_IMPRESSUM') . "</a> <!-- external link to impressum -->\n";
         echo "   </font></div>\n";
         echo "  </td>\n";
         echo " </tr>\n\n";
@@ -566,44 +608,51 @@ function LeftMenu ($coma)
     echo "    </div>\n";
 }
 
-function PageFooter ($msg="", $error="", $popup=false, $headerH=81, $nores=false)
+function PageFooter($msg = '', $error = '', $popup = false, $headerH = 81, $nores = false)
 {
     global $pagetime;
     global $GlobalUser;
     global $GlobalUni;
     global $query_counter;
 
-    loca_add ("reg", $GlobalUser['lang']);
+    loca_add('reg', $GlobalUser['lang']);
 
-    if ( $GlobalUser['debug'] )
-    {
-        $mtime = microtime(); 
-        $mtime = explode(" ",$mtime); 
+    if ($GlobalUser['debug']) {
+        $mtime = microtime();
+        $mtime = explode(' ', $mtime);
         $mtime = $mtime[1] + $mtime[0];
         $endtime = $mtime;
-        $msg = sprintf ( loca_lang("DEBUG_PAGE_INFO", $GlobalUni['lang']), $endtime-$pagetime, $query_counter) . GetSQLQueryLogText() . $msg;
+        $msg = sprintf(loca_lang('DEBUG_PAGE_INFO', $GlobalUni['lang']), $endtime - $pagetime, $query_counter) . GetSQLQueryLogText() . $msg;
     }
 
-    if ( !$GlobalUser['validated']) $error = "<center> \n".va(loca("REG_NOT_ACTIVATED"), $GlobalUser['session'])."<br></center>\n" . $error;
-    else if ( $GlobalUser['disable']) $error = "<center>\n".va(loca("REG_PENDING_DELETE"), date ("Y-m-d H:i:s", $GlobalUser['disable_until']))."<br></center>\n" . $error;
+    if (!$GlobalUser['validated']) {
+        $error = "<center> \n" . va(loca('REG_NOT_ACTIVATED'), $GlobalUser['session']) . "<br></center>\n" . $error;
+    } elseif ($GlobalUser['disable']) {
+        $error = "<center>\n" . va(loca('REG_PENDING_DELETE'), date('Y-m-d H:i:s', $GlobalUser['disable_until'])) . "<br></center>\n" . $error;
+    }
 
-    $msgdisplay = "";
-    if ($msg !== "") $msgdisplay = "messagebox.style.display='block';\n";
-    $errdisplay = "";
-    if ($error !== "") $errdisplay = "errorbox.style.display='block';\n";
+    $msgdisplay = '';
+    if ($msg !== '') {
+        $msgdisplay = "messagebox.style.display='block';\n";
+    }
+    $errdisplay = '';
+    if ($error !== '') {
+        $errdisplay = "errorbox.style.display='block';\n";
+    }
 
     echo "\n\n<script>\n";
     echo "messageboxHeight=0;\n";
     echo "errorboxHeight=0;\n";
     echo "contentbox = document.getElementById('content');\n";
     echo "</script>\n";
-    echo "<div id='messagebox'><center>".$msg."</center></div>\n";
-    echo "<div id='errorbox'><center>".$error."</center></div>\n";
+    echo "<div id='messagebox'><center>" . $msg . "</center></div>\n";
+    echo "<div id='errorbox'><center>" . $error . "</center></div>\n";
     echo "<script>\n";
-    if ($nores) echo "messagebox.style.top='0px';\n";
+    if ($nores) {
+        echo "messagebox.style.top='0px';\n";
+    }
     echo "headerHeight = $headerH;\n";
-    if ($popup)
-    {
+    if ($popup) {
         echo "contentbox.style.left='0px';\n";
         echo "contentbox.style.width='100%';\n";
     }
@@ -640,53 +689,51 @@ function PageFooter ($msg="", $error="", $popup=false, $headerH=81, $nores=false
     echo "</body></html>\n";
 }
 
-function InvalidSessionPage ()
+function InvalidSessionPage()
 {
     global $GlobalUser;
 
-    $unitab = LoadUniverse ();
+    $unitab = LoadUniverse();
     $uni = $unitab['num'];
 
-    loca_add ("common", $GlobalUser['lang']);
-    loca_add ("reg", $GlobalUser['lang']);
+    loca_add('common', $GlobalUser['lang']);
+    loca_add('reg', $GlobalUser['lang']);
 
-    $error = array ( null, $GlobalUser['player_id'], $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT'], $_SERVER['REQUEST_URI'], loca("REG_SESSION_INVALID"), time() );
-    $id = AddDBRow ( $error, 'errors' );
+    $error = [ null, $GlobalUser['player_id'], $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT'], $_SERVER['REQUEST_URI'], loca('REG_SESSION_INVALID'), time() ];
+    $id = AddDBRow($error, 'errors');
 
     echo "<html> <head>\n";
     echo "  <link rel='stylesheet' type='text/css' href='css/default.css' />\n";
     echo "  <link rel='stylesheet' type='text/css' href='css/formate.css' />\n";
     echo "  <meta http-equiv='content-type' content='text/html; charset=UTF-8' />\n";
-    echo "  <title>".va(loca_lang("PAGE_TITLE", $GlobalUser['lang']), $uni)."</title>\n";
+    echo '  <title>' . va(loca_lang('PAGE_TITLE', $GlobalUser['lang']), $uni) . "</title>\n";
     echo " </head>\n";
     echo " <body>\n";
     echo "  <center><font size='3'><b>    <br /><br />\n";
-    echo "    <font color='#FF0000'>".loca_lang("REG_SESSION_ERROR", $GlobalUser['lang'])."</font>\n";
-    echo loca_lang("REG_SESSION_ERROR_BODY", $GlobalUser['lang']);
-    echo "    Error-ID: ".$id."  </b></font></center> </body></html>\n";
+    echo "    <font color='#FF0000'>" . loca_lang('REG_SESSION_ERROR', $GlobalUser['lang']) . "</font>\n";
+    echo loca_lang('REG_SESSION_ERROR_BODY', $GlobalUser['lang']);
+    echo '    Error-ID: ' . $id . "  </b></font></center> </body></html>\n";
 }
 
-function MyGoto ($page, $param="")
+function MyGoto($page, $param = '')
 {
     global $GlobalUser;
-    ob_end_clean ();
-    $url = "index.php?page=$page&session=".$GlobalUser['session'].$param;
-    @header( 'Location: ' . $url);
-    die ( "<html><head><meta http-equiv='refresh' content='0;url=$url' /></head><body></body></html>" );
+    ob_end_clean();
+    $url = "index.php?page=$page&session=" . $GlobalUser['session'] . $param;
+    @header('Location: ' . $url);
+    die("<html><head><meta http-equiv='refresh' content='0;url=$url' /></head><body></body></html>");
 }
 
-function BeginContent ()
+function BeginContent()
 {
     echo "<!-- CONTENT AREA -->\n";
     echo "<div id='content'>\n";
     echo "<center>\n";
 }
 
-function EndContent ()
+function EndContent()
 {
     echo "</center>\n";
     echo "</div>\n";
     echo "<!-- END CONTENT AREA -->\n\n";
 }
-
-?>

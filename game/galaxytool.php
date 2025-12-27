@@ -3,19 +3,20 @@
 // Updating the embedded galaxytool.
 // It is updated every week, after the phantom debris cleanup.
 
-function GalaxyToolUpdateGalaxy ()
+function GalaxyToolUpdateGalaxy()
 {
     global $db_prefix;
 
-    $list = array ();
-    $query = "SELECT * FROM ".$db_prefix."planets WHERE type < ".PTYP_FARSPACE." AND type <> ".PTYP_COLONY_PHANTOM." ORDER BY planet_id ASC";
-    $result = dbquery ( $query );
-    $rows = dbrows ( $result );
-    while ($rows--)
-    {
-        $planet = dbarray ( $result );
-        if ( $planet['type'] == PTYP_DF && (($planet['m'] + $planet['k']) < 300) ) continue;
-        $list[ $planet['planet_id'] ] = array ();
+    $list = [];
+    $query = 'SELECT * FROM ' . $db_prefix . 'planets WHERE type < ' . PTYP_FARSPACE . ' AND type <> ' . PTYP_COLONY_PHANTOM . ' ORDER BY planet_id ASC';
+    $result = dbquery($query);
+    $rows = dbrows($result);
+    while ($rows--) {
+        $planet = dbarray($result);
+        if ($planet['type'] == PTYP_DF && (($planet['m'] + $planet['k']) < 300)) {
+            continue;
+        }
+        $list[ $planet['planet_id'] ] = [];
         $list[ $planet['planet_id'] ]['g'] = $planet['g'];
         $list[ $planet['planet_id'] ]['s'] = $planet['s'];
         $list[ $planet['planet_id'] ]['p'] = $planet['p'];
@@ -24,27 +25,26 @@ function GalaxyToolUpdateGalaxy ()
         $list[ $planet['planet_id'] ]['owner_id'] = $planet['owner_id'];
     }
 
-    $text = serialize ( $list );
-    $f = fopen ( "galaxytool/galaxy.txt", "w" );
-    fwrite ( $f, $text );
-    fclose ( $f );
+    $text = serialize($list);
+    $f = fopen('galaxytool/galaxy.txt', 'w');
+    fwrite($f, $text);
+    fclose($f);
 }
 
-function GalaxyToolUpdateStats ()
+function GalaxyToolUpdateStats()
 {
     global $db_prefix;
 
     $week = time() - 604800;
-    $week3 = time() - 604800*3;
+    $week3 = time() - 604800 * 3;
 
-    $list = array ();
-    $query = "SELECT * FROM ".$db_prefix."users WHERE place1 < 1000 AND admin = 0 ORDER BY player_id ASC";    // только игроков из топ1000 и не админов
-    $result = dbquery ( $query );
-    $rows = dbrows ( $result );
-    while ($rows--)
-    {
-        $user = dbarray ( $result );
-        $list[ $user['player_id'] ] = array ();
+    $list = [];
+    $query = 'SELECT * FROM ' . $db_prefix . 'users WHERE place1 < 1000 AND admin = 0 ORDER BY player_id ASC';    // только игроков из топ1000 и не админов
+    $result = dbquery($query);
+    $rows = dbrows($result);
+    while ($rows--) {
+        $user = dbarray($result);
+        $list[ $user['player_id'] ] = [];
         $list[ $user['player_id'] ]['name'] = $user['oname'];
         $list[ $user['player_id'] ]['i'] = $user['lastclick'] <= $week ? 1 : 0;
         $list[ $user['player_id'] ]['b'] = $user['banned'] ? 1 : 0;
@@ -56,54 +56,57 @@ function GalaxyToolUpdateStats ()
         $list[ $user['player_id'] ]['ally_id'] = $user['ally_id'];
     }
 
-    $text = serialize ( $list );
-    $f = fopen ( "galaxytool/statistics.txt", "w" );
-    fwrite ( $f, $text );
-    fclose ( $f );
+    $text = serialize($list);
+    $f = fopen('galaxytool/statistics.txt', 'w');
+    fwrite($f, $text);
+    fclose($f);
 }
 
-function GalaxyToolUpdateAllyStats ()
+function GalaxyToolUpdateAllyStats()
 {
     global $db_prefix;
 
-    $list = array ();
-    $query = "SELECT * FROM ".$db_prefix."ally ORDER BY ally_id ASC";
-    $result = dbquery ( $query );
-    $rows = dbrows ( $result );
-    while ($rows--)
-    {
-        $ally = dbarray ( $result );
-        $list[ $ally['ally_id'] ] = array ();
+    $list = [];
+    $query = 'SELECT * FROM ' . $db_prefix . 'ally ORDER BY ally_id ASC';
+    $result = dbquery($query);
+    $rows = dbrows($result);
+    while ($rows--) {
+        $ally = dbarray($result);
+        $list[ $ally['ally_id'] ] = [];
         $list[ $ally['ally_id'] ]['name'] = $ally['tag'];
     }
 
-    $text = serialize ( $list );
-    $f = fopen ( "galaxytool/ally_statistics.txt", "w" );
-    fwrite ( $f, $text );
-    fclose ( $f );
+    $text = serialize($list);
+    $f = fopen('galaxytool/ally_statistics.txt', 'w');
+    fwrite($f, $text);
+    fclose($f);
 }
 
-function GalaxyToolReplaceOldStats ()
+function GalaxyToolReplaceOldStats()
 {
-    if ( file_exists('galaxytool/statistics.txt') ) $current = file_get_contents( 'galaxytool/statistics.txt' );
-    else $current = array ();
-    file_put_contents( 'galaxytool/statistics_old.txt' , $current);
+    if (file_exists('galaxytool/statistics.txt')) {
+        $current = file_get_contents('galaxytool/statistics.txt');
+    } else {
+        $current = [];
+    }
+    file_put_contents('galaxytool/statistics_old.txt', $current);
 }
 
-function GalaxyToolReplaceOldAllyStats ()
+function GalaxyToolReplaceOldAllyStats()
 {
-    if ( file_exists('galaxytool/ally_statistics.txt')) $current = file_get_contents( 'galaxytool/ally_statistics.txt' );
-    else $current = array ();
-    file_put_contents( 'galaxytool/ally_statistics_old.txt' , $current);
+    if (file_exists('galaxytool/ally_statistics.txt')) {
+        $current = file_get_contents('galaxytool/ally_statistics.txt');
+    } else {
+        $current = [];
+    }
+    file_put_contents('galaxytool/ally_statistics_old.txt', $current);
 }
 
-function GalaxyToolUpdate ()
+function GalaxyToolUpdate()
 {
-    GalaxyToolUpdateGalaxy ();
-    GalaxyToolReplaceOldStats ();
-    GalaxyToolReplaceOldAllyStats ();
-    GalaxyToolUpdateStats ();
-    GalaxyToolUpdateAllyStats ();
+    GalaxyToolUpdateGalaxy();
+    GalaxyToolReplaceOldStats();
+    GalaxyToolReplaceOldAllyStats();
+    GalaxyToolUpdateStats();
+    GalaxyToolUpdateAllyStats();
 }
-
-?>
