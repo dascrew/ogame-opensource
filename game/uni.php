@@ -33,11 +33,41 @@ function DisableNews()
 // Set the parameters of the universe (all at the same time)
 function SetUniParam($speed, $fspeed, $acs, $fid, $did, $defrepair, $defrepair_delta, $galaxies, $systems, $rapid, $moons, $freeze, $lang, $battle_engine, $php_battle, $force_lang, $start_dm, $max_werf, $feedage)
 {
-    global $db_prefix;
-    global $GlobalUni;
+    global $db_prefix, $db_connect, $GlobalUni;
 
-    $query = 'UPDATE ' . $db_prefix . "uni SET lang='" . $lang . "', battle_engine='" . $battle_engine . "', freeze=$freeze, speed=$speed, fspeed=$fspeed, acs=$acs, fid=$fid, did=$did, defrepair=$defrepair, defrepair_delta=$defrepair_delta, galaxies=$galaxies, systems=$systems, rapid=$rapid, moons=$moons, php_battle=$php_battle, force_lang=$force_lang, start_dm=$start_dm, max_werf=$max_werf, feedage=$feedage";
-    dbquery($query);
+    // Validate string parameters
+    $lang = trim($lang);
+    $battle_engine = trim($battle_engine);
+
+    $query = 'UPDATE ' . $db_prefix . 'uni SET lang=?, battle_engine=?, freeze=?, speed=?, fspeed=?, acs=?, fid=?, did=?, defrepair=?, defrepair_delta=?, galaxies=?, systems=?, rapid=?, moons=?, php_battle=?, force_lang=?, start_dm=?, max_werf=?, feedage=?';
+    $stmt = mysqli_prepare($db_connect, $query);
+    if ($stmt) {
+        mysqli_stmt_bind_param(
+            $stmt,
+            'sssssssssssssssssss',
+            $lang,
+            $battle_engine,
+            $freeze,
+            $speed,
+            $fspeed,
+            $acs,
+            $fid,
+            $did,
+            $defrepair,
+            $defrepair_delta,
+            $galaxies,
+            $systems,
+            $rapid,
+            $moons,
+            $php_battle,
+            $force_lang,
+            $start_dm,
+            $max_werf,
+            $feedage
+        );
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    }
 
     $GlobalUni = LoadUniverse();
 }
@@ -68,6 +98,7 @@ function SetMaxUsers($maxusers)
     global $db_prefix;
     global $GlobalUni;
 
+    $maxusers = (int)$maxusers;
     if ($maxusers > 0) {
         $query = 'UPDATE ' . $db_prefix . "uni SET maxusers=$maxusers";
         dbquery($query);
