@@ -14,9 +14,11 @@ function LoadUniverse()
 // Update News.
 function UpdateNews($news1, $news2, $days)
 {
-    global $db_prefix;
+    global $db_prefix, $db_connect;
     $until = time() + $days * 24 * 60 * 60;
-    $query = 'UPDATE ' . $db_prefix . "uni SET news1 = '" . $news1 . "', news2 = '" . $news2 . "', news_until = $until";
+    $safe_news1 = mysqli_real_escape_string($db_connect, $news1);
+    $safe_news2 = mysqli_real_escape_string($db_connect, $news2);
+    $query = 'UPDATE ' . $db_prefix . "uni SET news1 = '" . $safe_news1 . "', news2 = '" . $safe_news2 . "', news_until = $until";
     dbquery($query);
 }
 

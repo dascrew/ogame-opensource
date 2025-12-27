@@ -212,7 +212,8 @@ function AllyChangeName($ally_id, $name)
 function AllyChangeOwner($ally_id, $owner_id)
 {
     global $db_prefix;
-    $query = 'UPDATE ' . $db_prefix . 'ally SET owner_id = ' . intval($owner_id);
+    $ally_id = intval($ally_id);
+    $query = "UPDATE ".$db_prefix."ally SET owner_id = " . intval($owner_id) . " WHERE ally_id = " . $ally_id;
     dbquery($query);
 }
 
