@@ -3,32 +3,32 @@
 // Admin Area: battle reports.
 // Battle reports are kept for 2 weeks.
 
-function Admin_BattleReport ()
+function Admin_BattleReport()
 {
     global $session;
     global $db_prefix;
     global $GlobalUser;
     global $GlobalUni;
 
-?>
+    ?>
 
 <?=AdminPanel();?>
 
 <?php
 
-    // Show battle report
-    if ( key_exists ( 'bericht', $_GET ) ) {
-        $query = "SELECT * FROM ".$db_prefix."battledata WHERE battle_id = " . intval ($_GET['bericht']);
-        $result = dbquery ( $query );
-        $row = dbarray ($result);
-        ob_clean ();
-        loca_add ( "battlereport", $GlobalUser['lang'] );
-?>
+        // Show battle report
+        if (key_exists('bericht', $_GET)) {
+            $query = 'SELECT * FROM ' . $db_prefix . 'battledata WHERE battle_id = ' . intval($_GET['bericht']);
+            $result = dbquery($query);
+            $row = dbarray($result);
+            ob_clean();
+            loca_add('battlereport', $GlobalUser['lang']);
+            ?>
 <html>
 <HEAD>
 <LINK rel="stylesheet" type="text/css" href="<?=UserSkin();?>formate.css">
   <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-  <TITLE><?=loca("BATTLE_REPORT");?></TITLE>
+  <TITLE><?=loca('BATTLE_REPORT');?></TITLE>
   <script src="js/utilities.js" type="text/javascript"></script>
   <script type="text/javascript" src="js/overLib/overlib.js"></script>
   <script language="JavaScript">var session="<?=$session;?>";</script>
@@ -40,29 +40,29 @@ function Admin_BattleReport ()
    <tr>
     <td>
 <?php
-        echo $row['report'];
-?>
+                    echo $row['report'];
+            ?>
 </td>
    </tr>
 </table>
 </BODY>
 </html>
 <?php
-        ob_end_flush ();
-        die ();
-    }
+                    ob_end_flush();
+            die();
+        }
 
     // Display a list of all reports
-    $query = "SELECT * FROM ".$db_prefix."battledata ORDER BY date DESC";
-    $result = dbquery ( $query );
+    $query = 'SELECT * FROM ' . $db_prefix . 'battledata ORDER BY date DESC';
+    $result = dbquery($query);
 
-    echo "<table>";
-    while ( $row = dbarray ($result) ) {
-        echo "<tr><td>".date("Y.m.d H:i:s", $row['date'])."</td><td>".str_replace ( "{PUBLIC_SESSION}" , $session, $row['title'])."</td></tr>";
+    echo '<table>';
+    while ($row = dbarray($result)) {
+        echo '<tr><td>' . date('Y.m.d H:i:s', $row['date']) . '</td><td>' . str_replace('{PUBLIC_SESSION}', $session, $row['title']) . '</td></tr>';
     }
-    echo "</table>";
+    echo '</table>';
 
-?>
+    ?>
 
 <?php
 }

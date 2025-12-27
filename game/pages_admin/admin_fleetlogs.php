@@ -2,7 +2,7 @@
 
 // Admin Area: Current flights of players, as well as flight logs
 
-function Admin_Fleetlogs ()
+function Admin_Fleetlogs()
 {
     global $session;
     global $db_prefix;
@@ -11,69 +11,68 @@ function Admin_Fleetlogs ()
 
     $big_fleet_points = 100000000;      // If a fleet is larger than the specified number of points, it is highlighted in a special way ("large").
 
-    $now = time ();
+    $now = time();
 
     // Обработка POST-запросов.
     $player_id = 0;
-    if ( method () === "POST" && $GlobalUser['admin'] >= 2 )
-    {
-        if ( key_exists ( "order_2min", $_POST ) ) {        // -2 minutes before the task commences
-            $id = intval ($_POST['order_2min']);
-            $queue = LoadQueue ( $id );
-            $fleet_obj = LoadFleet ( $queue['sub_id'] );
-            if ( $fleet_obj['union_id'] ) {
-                UpdateUnionTime ( $fleet_obj['union_id'], $now+2*60, 0, true );
-            }
-            else {
-                $query = "UPDATE ".$db_prefix."queue SET end=".($now+2*60)." WHERE task_id=$id";
-                dbquery ( $query );
+    if (method() === 'POST' && $GlobalUser['admin'] >= 2) {
+        if (key_exists('order_2min', $_POST)) {        // -2 minutes before the task commences
+            $id = intval($_POST['order_2min']);
+            $queue = LoadQueue($id);
+            $fleet_obj = LoadFleet($queue['sub_id']);
+            if ($fleet_obj['union_id']) {
+                UpdateUnionTime($fleet_obj['union_id'], $now + 2 * 60, 0, true);
+            } else {
+                $query = 'UPDATE ' . $db_prefix . 'queue SET end=' . ($now + 2 * 60) . " WHERE task_id=$id";
+                dbquery($query);
             }
         }
 
-        if ( key_exists ( "order_end", $_POST ) ) {        // Complete the task
-            $id = intval ($_POST['order_end']);
-            $queue = LoadQueue ( $id );
-            $fleet_obj = LoadFleet ( $queue['sub_id'] );
-            if ( $fleet_obj['union_id'] ) {
-                UpdateUnionTime ( $fleet_obj['union_id'], $now, 0, true );
-            }
-            else {
-                $query = "UPDATE ".$db_prefix."queue SET end=$now WHERE task_id=$id";
-                dbquery ( $query );
+        if (key_exists('order_end', $_POST)) {        // Complete the task
+            $id = intval($_POST['order_end']);
+            $queue = LoadQueue($id);
+            $fleet_obj = LoadFleet($queue['sub_id']);
+            if ($fleet_obj['union_id']) {
+                UpdateUnionTime($fleet_obj['union_id'], $now, 0, true);
+            } else {
+                $query = 'UPDATE ' . $db_prefix . "queue SET end=$now WHERE task_id=$id";
+                dbquery($query);
             }
         }
 
-        if ( key_exists ( "order_return", $_POST ) ) {        // Return the fleet
-            $queue = LoadQueue ( intval ($_POST['order_return']) );
-            RecallFleet ( $queue['sub_id'] );
+        if (key_exists('order_return', $_POST)) {        // Return the fleet
+            $queue = LoadQueue(intval($_POST['order_return']));
+            RecallFleet($queue['sub_id']);
         }
     }
 
-    $query = "SELECT * FROM ".$db_prefix."queue WHERE type='Fleet' ORDER BY end ASC";
-    $result = dbquery ($query);
-    $anz = $rows = dbrows ($result);
+    $query = 'SELECT * FROM ' . $db_prefix . "queue WHERE type='Fleet' ORDER BY end ASC";
+    $result = dbquery($query);
+    $anz = $rows = dbrows($result);
     $bxx = 1;
 
     AdminPanel();
 
     echo "<table>\n";
-    echo "<tr><td class=c>N</td> <td class=c>".loca("ADM_FLOGS_TIMER")."</td> <td class=c>".loca("ADM_FLOGS_ORDER")."</td> <td class=c>".loca("ADM_FLOGS_SEND_TIME")."</td> <td class=c>".loca("ADM_FLOGS_ARRIVE_TIME")."</td><td class=c>".loca("ADM_FLOGS_FLIGHT_TIME")."</td> <td class=c>".loca("ADM_FLOGS_START")."</td> <td class=c>".loca("ADM_FLOGS_TARGET")."</td> <td class=c>".loca("ADM_FLOGS_FLEET")."</td> <td class=c>".loca("ADM_FLOGS_CARGO")."</td> <td class=c>".loca("ADM_FLOGS_FUEL")."</td> <td class=c>".loca("ADM_FLOGS_ACS")."</td> <td class=c colspan=3>".loca("ADM_FLOGS_ACTION")."</td> </tr>\n";
+    echo '<tr><td class=c>N</td> <td class=c>' . loca('ADM_FLOGS_TIMER') . '</td> <td class=c>' . loca('ADM_FLOGS_ORDER') . '</td> <td class=c>' . loca('ADM_FLOGS_SEND_TIME') . '</td> <td class=c>' . loca('ADM_FLOGS_ARRIVE_TIME') . '</td><td class=c>' . loca('ADM_FLOGS_FLIGHT_TIME') . '</td> <td class=c>' . loca('ADM_FLOGS_START') . '</td> <td class=c>' . loca('ADM_FLOGS_TARGET') . '</td> <td class=c>' . loca('ADM_FLOGS_FLEET') . '</td> <td class=c>' . loca('ADM_FLOGS_CARGO') . '</td> <td class=c>' . loca('ADM_FLOGS_FUEL') . '</td> <td class=c>' . loca('ADM_FLOGS_ACS') . '</td> <td class=c colspan=3>' . loca('ADM_FLOGS_ACTION') . "</td> </tr>\n";
 
-    while ($rows--)
-    {
-        $queue = dbarray ( $result );
-        $fleet_obj = LoadFleet ( $queue['sub_id'] );
+    while ($rows--) {
+        $queue = dbarray($result);
+        $fleet_obj = LoadFleet($queue['sub_id']);
 
-        $fleet_price = FleetPrice ( $fleet_obj );
+        $fleet_price = FleetPrice($fleet_obj);
         $points = $fleet_price['points'];
         $fpoints = $fleet_price['fpoints'];
-        $style = "";
-        if ( $points >= $big_fleet_points ) {
-            if ( $fleet_obj['mission'] <= 2 ) $style = " style=\"background-color: FireBrick;\" ";
-            else $style = " style=\"background-color: DarkGreen;\" ";
+        $style = '';
+        if ($points >= $big_fleet_points) {
+            if ($fleet_obj['mission'] <= 2) {
+                $style = ' style="background-color: FireBrick;" ';
+            } else {
+                $style = ' style="background-color: DarkGreen;" ';
+            }
         }
 
-?>
+        ?>
 
         <tr <?=$style;?> >
 
@@ -81,68 +80,72 @@ function Admin_Fleetlogs ()
 
         <th <?=$style;?> >
 <?php
-    echo "<table><tr $style ><th $style ><div id='bxx".$bxx."' title='".($queue['end'] - $now)."' star='".$queue['start']."'> </th>";
-    echo "<tr><th $style >".date ("d.m.Y H:i:s", $queue['end'])."</th></tr></table>";
-?>
+            echo "<table><tr $style ><th $style ><div id='bxx" . $bxx . "' title='" . ($queue['end'] - $now) . "' star='" . $queue['start'] . "'> </th>";
+        echo "<tr><th $style >" . date('d.m.Y H:i:s', $queue['end']) . '</th></tr></table>';
+        ?>
         </th>
         <th <?=$style;?> >
 <?php
-    echo FleetlogsMissionText ( $fleet_obj['mission'] );
-?>
+            echo FleetlogsMissionText($fleet_obj['mission']);
+        ?>
         </th>
-        <th <?=$style;?> ><?=date ("d.m.Y", $queue['start']);?> <br> <?=date ("H:i:s", $queue['start']);?></th>
-        <th <?=$style;?> ><?=date ("d.m.Y", $queue['end']);?> <br> <?=date ("H:i:s", $queue['end']);?></th>
+        <th <?=$style;?> ><?=date('d.m.Y', $queue['start']);?> <br> <?=date('H:i:s', $queue['start']);?></th>
+        <th <?=$style;?> ><?=date('d.m.Y', $queue['end']);?> <br> <?=date('H:i:s', $queue['end']);?></th>
         <th <?=$style;?> >
 <?php
-    echo "<nobr>".BuildDurationFormat ($fleet_obj['flight_time']) . "</nobr><br>";
-    echo "<nobr>".$fleet_obj['flight_time'] . " сек.</nobr>";
-?>
-        </th>
-        <th <?=$style;?> >
-<?php
-    $planet = GetPlanet ( $fleet_obj['start_planet'] );
-    $user = LoadUser ( $planet['owner_id'] );
-    echo AdminPlanetName($planet['planet_id']) . " " . AdminPlanetCoord($planet) . " <br>";
-    echo AdminUserName($user);
-?>
+            echo '<nobr>' . BuildDurationFormat($fleet_obj['flight_time']) . '</nobr><br>';
+        echo '<nobr>' . $fleet_obj['flight_time'] . ' сек.</nobr>';
+        ?>
         </th>
         <th <?=$style;?> >
 <?php
-    $planet = GetPlanet ( $fleet_obj['target_planet'] );
-    $user = LoadUser ( $planet['owner_id'] );
-    echo AdminPlanetName($planet['planet_id']) . " " . AdminPlanetCoord($planet). " <br>";
-    echo AdminUserName($user);
-?>
+            $planet = GetPlanet($fleet_obj['start_planet']);
+        $user = LoadUser($planet['owner_id']);
+        echo AdminPlanetName($planet['planet_id']) . ' ' . AdminPlanetCoord($planet) . ' <br>';
+        echo AdminUserName($user);
+        ?>
         </th>
         <th <?=$style;?> >
 <?php
-    foreach ($fleetmap as $i=>$gid) {
-        $amount = $fleet_obj["ship".$gid];
-        if ( $amount > 0 ) echo loca ("NAME_$gid") . ":" . nicenum($amount) . " ";
-    }
-?>
+            $planet = GetPlanet($fleet_obj['target_planet']);
+        $user = LoadUser($planet['owner_id']);
+        echo AdminPlanetName($planet['planet_id']) . ' ' . AdminPlanetCoord($planet) . ' <br>';
+        echo AdminUserName($user);
+        ?>
         </th>
         <th <?=$style;?> >
 <?php
-    $total = $fleet_obj['m'] + $fleet_obj['k'] + $fleet_obj['d'];
-    if ( $total > 0 ) {
-        echo loca("METAL") . ": " . nicenum ($fleet_obj['m']) . "<br>" ;
-        echo loca("CRYSTAL") . ": " . nicenum ($fleet_obj['k']) . "<br>" ;
-        echo loca("DEUTERIUM") . ": " . nicenum ($fleet_obj['d']) ;
-    }
-    else echo "-";
-?>
-        </th>
-        <th <?=$style;?> >
-        <?=nicenum ($fleet_obj['fuel']);?>
+            foreach ($fleetmap as $i => $gid) {
+                $amount = $fleet_obj['ship' . $gid];
+                if ($amount > 0) {
+                    echo loca("NAME_$gid") . ':' . nicenum($amount) . ' ';
+                }
+            }
+        ?>
         </th>
         <th <?=$style;?> >
 <?php
-    if ( $fleet_obj['union_id'] ) {
-        echo $fleet_obj['union_id'];
-    }
-    else echo "-";
-?>
+            $total = $fleet_obj['m'] + $fleet_obj['k'] + $fleet_obj['d'];
+        if ($total > 0) {
+            echo loca('METAL') . ': ' . nicenum($fleet_obj['m']) . '<br>' ;
+            echo loca('CRYSTAL') . ': ' . nicenum($fleet_obj['k']) . '<br>' ;
+            echo loca('DEUTERIUM') . ': ' . nicenum($fleet_obj['d']) ;
+        } else {
+            echo '-';
+        }
+        ?>
+        </th>
+        <th <?=$style;?> >
+        <?=nicenum($fleet_obj['fuel']);?>
+        </th>
+        <th <?=$style;?> >
+<?php
+            if ($fleet_obj['union_id']) {
+                echo $fleet_obj['union_id'];
+            } else {
+                echo '-';
+            }
+        ?>
         </th>
 
         <th <?=$style;?> >
@@ -166,7 +169,7 @@ function Admin_Fleetlogs ()
 
 <?php
 
-        $bxx++;
+                $bxx++;
 
     }
     echo "<script language=javascript>anz=$anz;t();</script>\n";
