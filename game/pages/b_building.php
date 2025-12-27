@@ -2,36 +2,56 @@
 
 // Building structures.
 
-$BuildError = "";
+$BuildError = '';
 
-loca_add ( "menu", $GlobalUser['lang'] );
-loca_add ( "techshort", $GlobalUser['lang'] );
-loca_add ( "build", $GlobalUser['lang'] );
+loca_add('menu', $GlobalUser['lang']);
+loca_add('techshort', $GlobalUser['lang']);
+loca_add('build', $GlobalUser['lang']);
 
-if ( key_exists ('cp', $_GET)) SelectPlanet ( $GlobalUser['player_id'], intval ($_GET['cp']));
-$GlobalUser['aktplanet'] = GetSelectedPlanet ($GlobalUser['player_id']);
+if (key_exists('cp', $_GET)) {
+    SelectPlanet($GlobalUser['player_id'], intval($_GET['cp']));
+}
+$GlobalUser['aktplanet'] = GetSelectedPlanet($GlobalUser['player_id']);
 
 // Processing parameters.
-if ( key_exists ('modus', $_GET) && !$GlobalUser['vacation'] )
-{
-    if ( $_GET['modus'] === 'add' ) $BuildError = BuildEnque ( $GlobalUser, intval ($_GET['planet']), intval ($_GET['techid']), 0 );
-    else if ( $_GET['modus'] === 'destroy' ) $BuildError = BuildEnque ( $GlobalUser, intval ($_GET['planet']), intval ($_GET['techid']), 1 );
-    else if ( $_GET['modus'] === 'remove' ) $BuildError = BuildDeque ( $GlobalUser, intval ($_GET['planet']), intval ($_GET['listid']) );
+if (key_exists('modus', $_GET) && !$GlobalUser['vacation']) {
+    if ($_GET['modus'] === 'add') {
+        $BuildError = BuildEnque($GlobalUser, intval($_GET['planet']), intval($_GET['techid']), 0);
+    } elseif ($_GET['modus'] === 'destroy') {
+        $BuildError = BuildEnque($GlobalUser, intval($_GET['planet']), intval($_GET['techid']), 1);
+    } elseif ($_GET['modus'] === 'remove') {
+        $BuildError = BuildDeque($GlobalUser, intval($_GET['planet']), intval($_GET['listid']));
+    }
+
+    // Avoid duplicate queuing on browser refresh: redirect to a clean URL (PRG pattern)
+    $sessionParam = isset($_GET['session']) ? $_GET['session'] : '';
+    $planetParam = isset($_GET['planet']) ? intval($_GET['planet']) : 0;
+    $redirectUrl = 'index.php?page=b_building&session=' . $sessionParam . '&planet=' . $planetParam;
+    if ($BuildError !== '') {
+        $redirectUrl .= '&build_error=' . rawurlencode($BuildError);
+    }
+    header("Location: $redirectUrl");
+    echo "<html><head><meta http-equiv='refresh' content='0;url=$redirectUrl' /></head><body></body></html>";
+    exit;
+}
+
+if (isset($_GET['build_error'])) {
+    $BuildError = rawurldecode($_GET['build_error']);
 }
 
 $now = time();
-UpdateQueue ( $now );
-$aktplanet = GetPlanet ( $GlobalUser['aktplanet'] );
-ProdResources ( $aktplanet, $aktplanet['lastpeek'], $now );
-UpdatePlanetActivity ( $aktplanet['planet_id'] );
-UpdateLastClick ( $GlobalUser['player_id'] );
+UpdateQueue($now);
+$aktplanet = GetPlanet($GlobalUser['aktplanet']);
+ProdResources($aktplanet, $aktplanet['lastpeek'], $now);
+UpdatePlanetActivity($aktplanet['planet_id']);
+UpdateLastClick($GlobalUser['player_id']);
 $session = $_GET['session'];
-$prem = PremiumStatus ($GlobalUser);
+$prem = PremiumStatus($GlobalUser);
 
-$unitab = LoadUniverse ( );
+$unitab = LoadUniverse();
 $speed = $unitab['speed'];
 
-PageHeader ("b_building");
+PageHeader('b_building');
 
 BeginContent();
 
@@ -53,7 +73,7 @@ function t() {
 	h=0;
 	
 	if ((ss + 3) < aa) {
-	  bxx.innerHTML="<?=loca("BUILD_COMPLETE");?><br>"+"<a href=index.php?page=b_building&session="+ps+"&planet="+pl+"><?=loca("BUILD_NEXT");?></a>";
+	  bxx.innerHTML="<?=loca('BUILD_COMPLETE');?><br>"+"<a href=index.php?page=b_building&session="+ps+"&planet="+pl+"><?=loca('BUILD_NEXT');?></a>";
 	  
 	  if ((ss + 6) >= aa) {	    
 	  	window.setTimeout('document.location.href="index.php?page=b_building&session='+ps+'&planet='+pl+'";', 3500);
@@ -61,11 +81,11 @@ function t() {
 	} else {
 	if(s < 0) {
 	    if (1) {
-			bxx.innerHTML="<?=loca("BUILD_COMPLETE");?><br>"+"<a href=index.php?page=b_building&session="+ps+"&planet="+pl+"><?=loca("BUILD_NEXT");?></a>";
+			bxx.innerHTML="<?=loca('BUILD_COMPLETE');?><br>"+"<a href=index.php?page=b_building&session="+ps+"&planet="+pl+"><?=loca('BUILD_NEXT');?></a>";
 			window.setTimeout('document.location.href="index.php?page=b_building&session='+ps+'&planet='+pl+'";', 2000);
 		} else {
 			timeout = 0;
-			bxx.innerHTML="<?=loca("BUILD_COMPLETE");?><br>"+"<a href=index.php?page=b_building&session="+ps+"&planet="+pl+"><?=loca("BUILD_NEXT");?></a>";
+			bxx.innerHTML="<?=loca('BUILD_COMPLETE');?><br>"+"<a href=index.php?page=b_building&session="+ps+"&planet="+pl+"><?=loca('BUILD_NEXT');?></a>";
 		}
 	} else {
 		if(s>59){
@@ -84,9 +104,9 @@ function t() {
         }
         
         if (1) {
-        	bxx.innerHTML=h+":"+m+":"+s+"<br><a href=index.php?page=b_building&session="+ps+"&listid="+pk+"&modus="+pm+"&planet="+pl+"><?=loca("BUILD_CANCEL");?></a>";
+        	bxx.innerHTML=h+":"+m+":"+s+"<br><a href=index.php?page=b_building&session="+ps+"&listid="+pk+"&modus="+pm+"&planet="+pl+"><?=loca('BUILD_CANCEL');?></a>";
     	} else {
-    		bxx.innerHTML=h+":"+m+":"+s+"<br><a href=index.php?page=b_building&session="+ps+"&listid="+pk+"&modus="+pm+"&planet="+pl+"><?=loca("BUILD_CANCEL");?></a>";
+    		bxx.innerHTML=h+":"+m+":"+s+"<br><a href=index.php?page=b_building&session="+ps+"&listid="+pk+"&modus="+pm+"&planet="+pl+"><?=loca('BUILD_CANCEL');?></a>";
     	}
 	}    
 	if (timeout == 1) {
@@ -99,138 +119,184 @@ function t() {
 
 <?php
 
-if ( $GlobalUser['vacation'] ) {
-    echo "<font color=#FF0000><center>".va(loca("BUILD_ERROR_VACATION"), date ("Y-m-d H:i:s", $GlobalUser['vacation_until']))."</center></font>\n\n";
+if ($GlobalUser['vacation']) {
+    echo '<font color=#FF0000><center>' . va(loca('BUILD_ERROR_VACATION'), date('Y-m-d H:i:s', $GlobalUser['vacation_until'])) . "</center></font>\n\n";
 }
 
 echo "<table align=top ><tr><td style='background-color:transparent;'>\n";
-if ( $GlobalUser['useskin'] ) echo "<table width=\"530\">\n";
-else echo "<table width=\"468\">\n";
+if ($GlobalUser['useskin']) {
+    echo "<table width=\"530\">\n";
+} else {
+    echo "<table width=\"468\">\n";
+}
 
 // Check whether the research is in progress or not.
-$result = GetResearchQueue ( $GlobalUser['player_id'] );
-$resqueue = dbarray ($result);
+$result = GetResearchQueue($GlobalUser['player_id']);
+$resqueue = dbarray($result);
 $reslab_operating = ($resqueue != null);
 
 // Check to see if construction is underway at the shipyard.
-$result = GetShipyardQueue ( $aktplanet['planet_id'] );
-$shipqueue = dbarray ($result);
+$result = GetShipyardQueue($aktplanet['planet_id']);
+$shipqueue = dbarray($result);
 $shipyard_operating = ($shipqueue != null);
 
 // Display the build queue (if Commander is active)
-$result = GetBuildQueue ( $aktplanet['planet_id'] );
-$cnt = dbrows ( $result );
-for ( $i=0; $i<$cnt; $i++ )
-{
-    $queue = dbarray ($result);
-    if ($i == 0) $queue0 = $queue;
-    if ( $prem['commander'] )
-    {
-        if ( $queue['destroy'] ) $queue['level']++;
-        echo "<tr><td class=\"l\" colspan=\"2\">".($i+1).".: ".loca("NAME_".$queue['tech_id']);
-        if ($queue['level'] > 0) echo " , " . va(loca("BUILD_LEVEL"), $queue['level']);
-        if ( $queue['destroy'] ) echo "\n " . loca("BUILD_DEMOLISH");
-        if ($i==0) {
+$result = GetBuildQueue($aktplanet['planet_id']);
+$cnt = dbrows($result);
+for ($i = 0; $i < $cnt; $i++) {
+    $queue = dbarray($result);
+    if ($i == 0) {
+        $queue0 = $queue;
+    }
+    if ($prem['commander']) {
+        if ($queue['destroy']) {
+            $queue['level']++;
+        }
+        echo '<tr><td class="l" colspan="2">' . ($i + 1) . '.: ' . loca('NAME_' . $queue['tech_id']);
+        if ($queue['level'] > 0) {
+            echo ' , ' . va(loca('BUILD_LEVEL'), $queue['level']);
+        }
+        if ($queue['destroy']) {
+            echo "\n " . loca('BUILD_DEMOLISH');
+        }
+        if ($i == 0) {
             echo "<td class=\"k\"><div id=\"bxx\" class=\"z\"></div><SCRIPT language=JavaScript>\n";
-            echo "                  pp=\"".($queue['end']-$now)."\"\n";
-            echo "                  pk=\"".$queue['list_id']."\"\n";
+            echo '                  pp="' . ($queue['end'] - $now) . "\"\n";
+            echo '                  pk="' . $queue['list_id'] . "\"\n";
             echo "                  pm=\"remove\"\n";
-            echo "                  pl=\"".$aktplanet['planet_id']."\"\n";
+            echo '                  pl="' . $aktplanet['planet_id'] . "\"\n";
             echo "                  ps=\"$session\"\n";
             echo "                  t();\n";
             echo "                  </script></tr>\n";
-        }
-        else {
-            echo "<td class=\"k\"><font color=\"red\"><a href=\"index.php?page=b_building&session=$session&modus=remove&listid=".$queue['list_id']."&planet=".$aktplanet['planet_id']."\">".loca("BUILD_DEQUEUE")."</a></font></td></td></tr>\n";
+        } else {
+            echo "<td class=\"k\"><font color=\"red\"><a href=\"index.php?page=b_building&session=$session&modus=remove&listid=" . $queue['list_id'] . '&planet=' . $aktplanet['planet_id'] . '">' . loca('BUILD_DEQUEUE') . "</a></font></td></td></tr>\n";
         }
     }
 }
 
-foreach ( $buildmap as $i => $id )
-{
-    $lvl = $aktplanet['b'.$id];
-    if ( ! BuildMeetRequirement ( $GlobalUser, $aktplanet, $id ) ) continue;
-
-    echo "<tr>";
-
-    if ( $GlobalUser['useskin'] ) {
-        echo "<td class=l>";
-        echo "<a href=index.php?page=infos&session=$session&gid=".$id.">";
-        echo "<img border='0' src=\"".UserSkin()."gebaeude/".$id.".gif\" align='top' width='120' height='120'></a></td>";
-    }
-
-    echo "<td class=l>";
-    echo "<a href=index.php?page=infos&session=$session&gid=".$id.">".loca("NAME_$id")."</a></a>";
-    if ( $lvl ) echo " (".va(loca("BUILD_LEVEL"), $lvl).")";
-    echo "<br>". loca("SHORT_$id");
-    $res = BuildPrice ( $id, $lvl+1 );
-    $m = $res['m']; $k = $res['k']; $d = $res['d']; $e = $res['e'];
-    echo "<br>".loca("BUILD_PRICE").":";
-    if ($m) echo " ".loca("METAL").": <b>".nicenum($m)."</b>";
-    if ($k) echo " ".loca("CRYSTAL").": <b>".nicenum($k)."</b>";
-    if ($d) echo " ".loca("DEUTERIUM").": <b>".nicenum($d)."</b>";
-    if ($e) echo " ".loca("ENERGY").": <b>".nicenum($e)."</b>";
-    $t = BuildDuration ( $id, $lvl+1, $aktplanet['b'.GID_B_ROBOTS], $aktplanet['b'.GID_B_NANITES], $speed );
-    echo "<br>".loca("BUILD_DURATION").": ".BuildDurationFormat ( $t )."<br>";
-
-    if ( $prem['commander'] ) {
-        if ( $cnt ) {
-            if ( $cnt < 5) echo "<td class=k><a href=\"index.php?page=b_building&session=$session&modus=add&techid=$id&planet=".$aktplanet['planet_id']."\">".loca("BUILD_ENQUEUE")."</a></td>";
-            else echo "<td class=k>";
+foreach ($buildmap as $i => $id) {
+    $lvl = $aktplanet['b' . $id];
+    if ($aktplanet['type'] === PTYP_MOON) {
+        $planetaryOnly = [
+            GID_B_METAL_MINE,
+            GID_B_CRYS_MINE,
+            GID_B_DEUT_SYNTH,
+            GID_B_SOLAR,
+            GID_B_FUSION,
+            GID_B_NANITES,
+            GID_B_METAL_STOR,
+            GID_B_CRYS_STOR,
+            GID_B_DEUT_STOR,
+            GID_B_RES_LAB,
+            GID_B_TERRAFORMER,
+            GID_B_MISS_SILO,
+        ];
+        if (in_array($id, $planetaryOnly, true)) {
+            continue;
         }
-        else
-        {
-                  if ( $aktplanet['fields'] >= $aktplanet['maxfields'] ) {
-                        echo "<td class=l><font color=#FF0000>".loca("BUILD_QUEUE_FULL")."</font>";
-                  }
-                  else if ( $id == GID_B_RES_LAB && $reslab_operating ) {
-				echo "<td class=l><font  color=#FF0000>".loca("BUILD_BUSY")."</font> <br>";
-			}
-			else if ( ($id == GID_B_NANITES || $id == GID_B_SHIPYARD ) && $shipyard_operating ) {
-				echo "<td class=l><font  color=#FF0000>".loca("BUILD_BUSY")."</font> <br>";
-			}
-   			else if ( $lvl == 0 )
-      		{
-        		if ( IsEnoughResources ( $aktplanet, $m, $k, $d, $e )) echo "<td class=l><a href='index.php?page=b_building&session=$session&modus=add&techid=".$id."&planet=".$aktplanet['planet_id']."'><font color=#00FF00>".loca("BUILD_BUILD")."</font></a>\n";
-          		else echo "<td class=l><font color=#FF0000>".loca("BUILD_BUILD")."</font>\n";
-			}
-   			else
-      		{
-        		if ( IsEnoughResources ( $aktplanet, $m, $k, $d, $e )) echo "<td class=l><a href='index.php?page=b_building&session=$session&modus=add&techid=".$id."&planet=".$aktplanet['planet_id']."'><font color=#00FF00>".va(loca("BUILD_BUILD_LEVEL"),$lvl+1)."</font></a>\n";
-          		else echo "<td class=l><font color=#FF0000>".va(loca("BUILD_BUILD_LEVEL"),$lvl+1)."</font>";
-			}
+    } else {
+        $moonOnly = [GID_B_LUNAR_BASE, GID_B_PHALANX, GID_B_JUMP_GATE];
+        if (in_array($id, $moonOnly, true)) {
+            continue;
         }
     }
-    else {
-        if ( $cnt ) {
-            if ( $queue0['tech_id'] == $id )
-            {
-                $left = $queue0['end'] - time ();
-                echo "<td class=k><div id=\"bxx\" class=\"z\"></div><SCRIPT language=JavaScript>pp='".$left."'; pk='1'; pm='remove'; pl='".$aktplanet['planet_id']."'; ps='".$_GET['session']."'; t();</script>\n";
+
+    if (!checkRequirements($id, $GlobalUser, $aktplanet)['met']) {
+        continue;
+    }
+
+    echo '<tr>';
+
+    if ($GlobalUser['useskin']) {
+        echo '<td class=l>';
+        echo "<a href=index.php?page=infos&session=$session&gid=" . $id . '>';
+        echo "<img border='0' src=\"" . UserSkin() . 'gebaeude/' . $id . ".gif\" align='top' width='120' height='120'></a></td>";
+    }
+
+    echo '<td class=l>';
+    echo "<a href=index.php?page=infos&session=$session&gid=" . $id . '>' . loca("NAME_$id") . '</a></a>';
+    if ($lvl) {
+        echo ' (' . va(loca('BUILD_LEVEL'), $lvl) . ')';
+    }
+    echo '<br>' . loca("SHORT_$id");
+    $res = BuildPrice($id, $lvl + 1);
+    $m = $res['m'];
+    $k = $res['k'];
+    $d = $res['d'];
+    $e = $res['e'];
+    echo '<br>' . loca('BUILD_PRICE') . ':';
+    if ($m) {
+        echo ' ' . loca('METAL') . ': <b>' . nicenum($m) . '</b>';
+    }
+    if ($k) {
+        echo ' ' . loca('CRYSTAL') . ': <b>' . nicenum($k) . '</b>';
+    }
+    if ($d) {
+        echo ' ' . loca('DEUTERIUM') . ': <b>' . nicenum($d) . '</b>';
+    }
+    if ($e) {
+        echo ' ' . loca('ENERGY') . ': <b>' . nicenum($e) . '</b>';
+    }
+    $t = BuildDuration($id, $lvl + 1, $aktplanet['b' . GID_B_ROBOTS], $aktplanet['b' . GID_B_NANITES], $speed);
+    echo '<br>' . loca('BUILD_DURATION') . ': ' . BuildDurationFormat($t) . '<br>';
+
+    if ($prem['commander']) {
+        if ($cnt) {
+            if ($cnt < 5) {
+                echo "<td class=k><a href=\"index.php?page=b_building&session=$session&modus=add&techid=$id&planet=" . $aktplanet['planet_id'] . '">' . loca('BUILD_ENQUEUE') . '</a></td>';
+            } else {
+                echo '<td class=k>';
             }
-            else echo "<td class=k>";
+        } else {
+            if ($aktplanet['fields'] >= $aktplanet['maxfields']) {
+                echo '<td class=l><font color=#FF0000>' . loca('BUILD_QUEUE_FULL') . '</font>';
+            } elseif ($id == GID_B_RES_LAB && $reslab_operating) {
+                echo '<td class=l><font  color=#FF0000>' . loca('BUILD_BUSY') . '</font> <br>';
+            } elseif (($id == GID_B_NANITES || $id == GID_B_SHIPYARD) && $shipyard_operating) {
+                echo '<td class=l><font  color=#FF0000>' . loca('BUILD_BUSY') . '</font> <br>';
+            } elseif ($lvl == 0) {
+                if (IsEnoughResources($aktplanet, $m, $k, $d, $e)) {
+                    echo "<td class=l><a href='index.php?page=b_building&session=$session&modus=add&techid=" . $id . '&planet=' . $aktplanet['planet_id'] . "'><font color=#00FF00>" . loca('BUILD_BUILD') . "</font></a>\n";
+                } else {
+                    echo '<td class=l><font color=#FF0000>' . loca('BUILD_BUILD') . "</font>\n";
+                }
+            } else {
+                if (IsEnoughResources($aktplanet, $m, $k, $d, $e)) {
+                    echo "<td class=l><a href='index.php?page=b_building&session=$session&modus=add&techid=" . $id . '&planet=' . $aktplanet['planet_id'] . "'><font color=#00FF00>" . va(loca('BUILD_BUILD_LEVEL'), $lvl + 1) . "</font></a>\n";
+                } else {
+                    echo '<td class=l><font color=#FF0000>' . va(loca('BUILD_BUILD_LEVEL'), $lvl + 1) . '</font>';
+                }
+            }
         }
-        else {
-                  if ( $aktplanet['fields'] >= $aktplanet['maxfields'] ) {
-                        echo "<td class=l><font color=#FF0000>".loca("BUILD_QUEUE_FULL")."</font>";
-                  }
-			else if ( $id == GID_B_RES_LAB && $reslab_operating ) {
-				echo "<td class=l><font  color=#FF0000>".loca("BUILD_BUSY")."</font> <br>";
-			}
-			else if ( ($id == GID_B_NANITES || $id == GID_B_SHIPYARD ) && $shipyard_operating ) {
-				echo "<td class=l><font  color=#FF0000>".loca("BUILD_BUSY")."</font> <br>";
-			}
-   			else if ( $lvl == 0 )
-      		{
-        		if ( IsEnoughResources ( $aktplanet, $m, $k, $d, $e )) echo "<td class=l><a href='index.php?page=b_building&session=$session&modus=add&techid=".$id."&planet=".$aktplanet['planet_id']."'><font color=#00FF00>".loca("BUILD_BUILD")."</font></a>\n";
-          		else echo "<td class=l><font color=#FF0000>".loca("BUILD_BUILD")."</font>\n";
-			}
-   			else
-      		{
-        		if ( IsEnoughResources ( $aktplanet, $m, $k, $d, $e )) echo "<td class=l><a href='index.php?page=b_building&session=$session&modus=add&techid=".$id."&planet=".$aktplanet['planet_id']."'><font color=#00FF00>".va(loca("BUILD_BUILD_LEVEL"),$lvl+1)."</font></a>\n";
-          		else echo "<td class=l><font color=#FF0000>".va(loca("BUILD_BUILD_LEVEL"),$lvl+1)."</font>";
-			}
-		}
+    } else {
+        if ($cnt) {
+            if ($queue0['tech_id'] == $id) {
+                $left = $queue0['end'] - time();
+                echo "<td class=k><div id=\"bxx\" class=\"z\"></div><SCRIPT language=JavaScript>pp='" . $left . "'; pk='1'; pm='remove'; pl='" . $aktplanet['planet_id'] . "'; ps='" . $_GET['session'] . "'; t();</script>\n";
+            } else {
+                echo '<td class=k>';
+            }
+        } else {
+            if ($aktplanet['fields'] >= $aktplanet['maxfields']) {
+                echo '<td class=l><font color=#FF0000>' . loca('BUILD_QUEUE_FULL') . '</font>';
+            } elseif ($id == GID_B_RES_LAB && $reslab_operating) {
+                echo '<td class=l><font  color=#FF0000>' . loca('BUILD_BUSY') . '</font> <br>';
+            } elseif (($id == GID_B_NANITES || $id == GID_B_SHIPYARD) && $shipyard_operating) {
+                echo '<td class=l><font  color=#FF0000>' . loca('BUILD_BUSY') . '</font> <br>';
+            } elseif ($lvl == 0) {
+                if (IsEnoughResources($aktplanet, $m, $k, $d, $e)) {
+                    echo "<td class=l><a href='index.php?page=b_building&session=$session&modus=add&techid=" . $id . '&planet=' . $aktplanet['planet_id'] . "'><font color=#00FF00>" . loca('BUILD_BUILD') . "</font></a>\n";
+                } else {
+                    echo '<td class=l><font color=#FF0000>' . loca('BUILD_BUILD') . "</font>\n";
+                }
+            } else {
+                if (IsEnoughResources($aktplanet, $m, $k, $d, $e)) {
+                    echo "<td class=l><a href='index.php?page=b_building&session=$session&modus=add&techid=" . $id . '&planet=' . $aktplanet['planet_id'] . "'><font color=#00FF00>" . va(loca('BUILD_BUILD_LEVEL'), $lvl + 1) . "</font></a>\n";
+                } else {
+                    echo '<td class=l><font color=#FF0000>' . va(loca('BUILD_BUILD_LEVEL'), $lvl + 1) . '</font>';
+                }
+            }
+        }
     }
     echo "</td></tr>\n";
 }
@@ -240,6 +306,6 @@ echo "  </table>\n</tr>\n</table>\n";
 echo "<br><br><br><br>\n";
 EndContent();
 
-PageFooter ("", $BuildError);
-ob_end_flush ();
+PageFooter('', $BuildError);
+ob_end_flush();
 ?>

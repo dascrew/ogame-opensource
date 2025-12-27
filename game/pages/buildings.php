@@ -1,88 +1,175 @@
 <?php
 
-// Shipyard, Defense, and Research.
+declare(strict_types=1);
 
-loca_add ( "menu", $GlobalUser['lang'] );
-loca_add ( "techshort", $GlobalUser['lang'] );
-loca_add ( "build", $GlobalUser['lang'] );
-loca_add ( "premium", $GlobalUser['lang'] );
+/**
+ * Buildings Page - Shipyard, Defense, and Research
+ *
+ * Handles the construction of ships, defense systems, and research technologies.
+ * Processes both GET and POST requests for building queue management.
+ */
 
-if ( key_exists ('cp', $_GET)) SelectPlanet ($GlobalUser['player_id'], intval ($_GET['cp']));
-$GlobalUser['aktplanet'] = GetSelectedPlanet ($GlobalUser['player_id']);
+// Constants
+const MAX_SHIPYARD_QUEUE_SIZE = 99;
+const MISSILE_CAPACITY_PER_SILO_LEVEL = 10;
+const IPM_SILO_SIZE = 2;
+const ABM_SILO_SIZE = 1;
+const RESEARCH_TECHNOCRAT_BONUS = 1.1;
+const RESEARCH_DEFAULT_SPEED = 1.0;
+
+// Load localization resources
+loca_add('menu', $GlobalUser['lang']);
+loca_add('techshort', $GlobalUser['lang']);
+loca_add('build', $GlobalUser['lang']);
+loca_add('premium', $GlobalUser['lang']);
+
+// Initialize page state
+if (key_exists('cp', $_GET)) {
+    SelectPlanet($GlobalUser['player_id'], intval($_GET['cp']));
+}
+$GlobalUser['aktplanet'] = GetSelectedPlanet($GlobalUser['player_id']);
 $now = time();
-UpdateQueue ( $now );
-$aktplanet = GetPlanet ( $GlobalUser['aktplanet'] );
-ProdResources ( $aktplanet, $aktplanet['lastpeek'], $now );
-UpdatePlanetActivity ( $aktplanet['planet_id'] );
-UpdateLastClick ( $GlobalUser['player_id'] );
+UpdateQueue($now);
+$aktplanet = GetPlanet($GlobalUser['aktplanet']);
+ProdResources($aktplanet, $aktplanet['lastpeek'], $now);
+UpdatePlanetActivity($aktplanet['planet_id']);
+UpdateLastClick($GlobalUser['player_id']);
 $session = $_GET['session'];
 
-// POST request processing.
-if ( method () === "POST" && !$GlobalUser['vacation'] )
+/**
+ * Calculate maximum affordable units based on available resources
+ */
+function calculateMaxAffordable(array $planet, int $metal, int $crystal, int $deuterium): int
 {
-    foreach ( $_POST['fmenge'] as $gid=>$value )
-    {
-        $result = GetShipyardQueue ( $aktplanet['planet_id'] );    // Limit the number of shipyard orders.
-        if ( dbrows ($result)  >= 99 ) $value = 0;
+    $maxByMetal = $metal ? (int) floor($planet['m'] / $metal) : PHP_INT_MAX;
+    $maxByCrystal = $crystal ? (int) floor($planet['k'] / $crystal) : PHP_INT_MAX;
+    $maxByDeuterium = $deuterium ? (int) floor($planet['d'] / $deuterium) : PHP_INT_MAX;
 
-        if ( $value < 0 ) $value = 0;
-        if ( $value > 0 ) {
-            // Calculate amount (no more than the resources on the planet and no more than `max_werf`)
-            if ( $value > $GlobalUni['max_werf'] ) $value = $GlobalUni['max_werf'];
+    return min($maxByMetal, $maxByCrystal, $maxByDeuterium);
+}
 
-            $res = ShipyardPrice ( $gid );
-            $m = $res['m']; $k = $res['k']; $d = $res['d']; $e = $res['e'];
+/**
+ * Calculate free missile silo space
+ */
+function calculateFreeSiloSpace(array $planet): int
+{
+    $totalCapacity = $planet['b44'] * MISSILE_CAPACITY_PER_SILO_LEVEL;
+    $usedSpace = ($planet['d502'] * ABM_SILO_SIZE) + ($planet['d503'] * IPM_SILO_SIZE);
 
-            if ( $aktplanet['m'] < $m || $aktplanet['k'] < $k || $aktplanet['d'] < $d ) continue;    // insufficient resources for one unit
+    return $totalCapacity - $usedSpace;
+}
 
-            // Shield Domes.
-            if ( $gid == GID_D_SDOME || $gid == GID_D_LDOME ) $value = 1;
+/**
+ * Process shipyard order submission
+ */
+function processShipyardOrder(array &$aktplanet, int $gid, int $value, array $GlobalUser, array $GlobalUni): int
+{
+    // Validate queue size
+    $result = GetShipyardQueue($aktplanet['planet_id']);
+    if (dbrows($result) >= MAX_SHIPYARD_QUEUE_SIZE) {
+        return 0;
+    }
 
-            // Limit the number of missiles to the capacity of the silo.
-            $free_space = $aktplanet['b44'] * 10 - ($aktplanet['d502'] + 2 * $aktplanet['d503']);
-            if ( $gid == GID_D_ABM ) $value = min ( $free_space, $value );
-            if ( $gid == GID_D_IPM ) $value = min ( floor ($free_space / 2), $value );
-            
-            if ($m) $cm = floor ($aktplanet['m'] / $m);
-            else $cm = 1000;
-            if ($k) $ck = floor ($aktplanet['k'] / $k);
-            else $ck = 1000;
-            if ($d) $cd = floor ($aktplanet['d'] / $d);
-            else $cd = 1000;
-            $v = min ( $cm, min ($ck, $cd) );
-            if ( $value > $v ) $value = $v;
+    // Validate value
+    if ($value <= 0) {
+        return 0;
+    }
 
-            AddShipyard ( $GlobalUser['player_id'], $aktplanet['planet_id'], intval ($gid), intval ($value) );
-            $aktplanet = GetPlanet ( $GlobalUser['aktplanet'] );    // update the planet's state.
+    // Apply universe limit
+    if ($value > $GlobalUni['max_werf']) {
+        $value = $GlobalUni['max_werf'];
+    }
+
+    // Get unit cost
+    $res = ShipyardPrice($gid);
+    $m = $res['m'];
+    $k = $res['k'];
+    $d = $res['d'];
+
+    // Check if player can afford at least one unit
+    if ($aktplanet['m'] < $m || $aktplanet['k'] < $k || $aktplanet['d'] < $d) {
+        return 0;
+    }
+
+    // Shield Domes are limited to 1
+    if ($gid === GID_D_SDOME || $gid === GID_D_LDOME) {
+        $value = 1;
+    }
+
+    // Limit missiles by silo capacity
+    $freeSpace = calculateFreeSiloSpace($aktplanet);
+    if ($gid === GID_D_ABM) {
+        $value = min($freeSpace, $value);
+    }
+    if ($gid === GID_D_IPM) {
+        $value = min((int) floor($freeSpace / IPM_SILO_SIZE), $value);
+    }
+
+    // Calculate maximum affordable amount
+    $maxAffordable = calculateMaxAffordable($aktplanet, $m, $k, $d);
+    if ($value > $maxAffordable) {
+        $value = $maxAffordable;
+    }
+
+    return $value;
+}
+
+/**
+ * Handle POST request for shipyard orders
+ */
+function handleShipyardPost(array &$aktplanet, array $GlobalUser, array $GlobalUni): void
+{
+    if (method() !== 'POST' || $GlobalUser['vacation']) {
+        return;
+    }
+
+    foreach ($_POST['fmenge'] as $gid => $value) {
+        $value = processShipyardOrder($aktplanet, (int) $gid, (int) $value, $GlobalUser, $GlobalUni);
+
+        if ($value > 0) {
+            AddShipyard($GlobalUser['player_id'], $aktplanet['planet_id'], (int) $gid, $value);
+            $aktplanet = GetPlanet($aktplanet['planet_id']); // Refresh planet state
         }
     }
 }
 
-// GET request processing.
-if ( method () === "GET"  && !$GlobalUser['vacation'] )
+/**
+ * Handle GET request for research operations
+ */
+function handleResearchGet(array &$aktplanet, array $GlobalUser, int $now): void
 {
-	if ( $_GET['mode'] === "Forschung" ) {
-		$result = GetResearchQueue ( $GlobalUser['player_id'] );
-		$resqueue = dbarray ($result);
-		if ( $resqueue == null )		// The research is not in progress (run)
-		{
-			if ( key_exists ( 'bau', $_GET ) ) StartResearch ( $GlobalUser['player_id'], $aktplanet['planet_id'], intval ($_GET['bau']), $now );
-                  $aktplanet = GetPlanet ( $GlobalUser['aktplanet'] );    // update the planet's state.
-		}
-		else	// Research in progress (cancel)
-		{
-			if ( key_exists ( 'unbau', $_GET ) ) StopResearch ( $GlobalUser['player_id'] );
-                  $aktplanet = GetPlanet ( $GlobalUser['aktplanet'] );    // update the planet's state.
-		}
-	}
+    if (method() !== 'GET' || $GlobalUser['vacation'] || $_GET['mode'] !== 'Forschung') {
+        return;
+    }
+
+    $result = GetResearchQueue($GlobalUser['player_id']);
+    $resqueue = dbarray($result);
+
+    if (!$resqueue) {
+        // No research in progress - start new research
+        if (key_exists('bau', $_GET)) {
+            StartResearch($GlobalUser['player_id'], $aktplanet['planet_id'], intval($_GET['bau']), $now);
+            $aktplanet = GetPlanet($aktplanet['planet_id']); // Refresh planet state
+        }
+    } else {
+        // Research in progress - cancel research
+        if (key_exists('unbau', $_GET)) {
+            StopResearch($GlobalUser['player_id']);
+            $aktplanet = GetPlanet($aktplanet['planet_id']); // Refresh planet state
+        }
+    }
 }
 
-PageHeader ("buildings");
+// Process requests
+handleShipyardPost($aktplanet, $GlobalUser, $GlobalUni);
+handleResearchGet($aktplanet, $GlobalUser, $now);
 
-BeginContent ();
+PageHeader('buildings');
+
+BeginContent();
 
 echo "<title> \n";
-echo loca("BUILD_BUILDINGS_HEAD") . "\n";
+echo loca('BUILD_BUILDINGS_HEAD') . "\n";
 echo "</title> \n";
 echo "<script type=\"text/javascript\"> \n\n";
 echo "function setMax(key, number){\n";
@@ -90,350 +177,523 @@ echo "    document.getElementsByName('fmenge['+key+']')[0].value=number;\n";
 echo "}\n";
 echo "</script> \n";
 
-$unitab = LoadUniverse ( );
-$speed = $unitab['speed'];
+$unitab = LoadUniverse();
+$speed = (int) $unitab['speed'];
 
-// ************************************************ Shipyard ************************************************ 
+/**
+ * Render unit build form row
+ */
+function renderUnitRow(
+    int $id,
+    array $aktplanet,
+    string $session,
+    array $GlobalUser,
+    int $speed,
+    bool $busy,
+    string $unitType = 'f' // 'f' for fleet, 'd' for defense
+): void {
+    $useSkin = (bool) $GlobalUser['useskin'];
+    $premium = PremiumStatus($GlobalUser);
 
-if ( $_GET['mode'] === "Flotte" )
-{
-    $prem = PremiumStatus ($GlobalUser);
+    echo '<tr>';
 
-    // Check to see if a Shipyard or Nanite Factory is under construction.
-    $result = GetBuildQueue ( $aktplanet['planet_id'] );
-    $queue = dbarray ( $result );
-    $busy = ( $queue['tech_id'] == GID_B_SHIPYARD || $queue['tech_id'] == GID_B_NANITES ) ;
-
-    if ( $busy ) {
-        echo "<br><br><font color=#FF0000>".loca("BUILD_ERROR_SHIPYARD_BUSY")."</font><br><br>";
+    if ($useSkin) {
+        echo "<td class=l>\n";
+        echo "<a href=index.php?page=infos&session=$session&gid=$id>\n";
+        echo "<img border='0' src=\"" . UserSkin() . "gebaeude/$id.gif\" align='top' width='120' height='120'>\n";
+        echo "</a>\n";
+        echo "</td>\n";
+        echo '<td class=l>';
+    } else {
+        echo '<td class=l colspan=2>';
     }
-    if ( $GlobalUser['vacation'] ) {
-        echo "<font color=#FF0000><center>".va(loca("BUILD_ERROR_VACATION"), date ("Y-m-d H:i:s", $GlobalUser['vacation_until']))."</center></font>";
-    }
-    echo "<form action=index.php?page=buildings&session=$session&mode=".$_GET['mode']." method=post>";
-    echo "<table align=top><tr><td style='background-color:transparent;'>  ";
-    if ( $GlobalUser['useskin'] ) echo "<table width=\"530\">\n";
-    else echo "<table width=\"468\">\n";
-    echo "         <tr> \n";
-    echo "          <td class=l colspan=\"2\">".loca("BUILD_DESC")."</td> \n";
-    echo "          <td class=l><b>".loca("BUILD_AMOUNT")."</b></td> \n";
-    echo "          </tr> \n\n";
 
-    // See if there's a shipyard on the planet.
-    if ( $aktplanet['b21'] ) {
-        // Output the objects that can be built in the Shipyard.
-        foreach ( $fleetmap as $i => $id ) {
-            if ( !ShipyardMeetRequirement ( $GlobalUser, $aktplanet, $id ) )
-            {
-                if ($aktplanet['f'.$id] <= 0) continue;
+    echo "<a href=index.php?page=infos&session=$session&gid=$id>" . loca("NAME_$id") . '</a>';
+
+    $currentAmount = $aktplanet[$unitType . $id];
+    if ($currentAmount) {
+        echo ' (' . va(loca('BUILD_SHIPYARD_UNITS'), $currentAmount) . ')';
+    }
+
+    $res = ShipyardPrice($id);
+    $m = $res['m'];
+    $k = $res['k'];
+    $d = $res['d'];
+    $e = $res['e'];
+
+    echo '<br>' . loca("SHORT_$id") . '<br>' . loca('BUILD_PRICE') . ':';
+    if ($m) {
+        echo ' ' . loca('METAL') . ': <b>' . nicenum($m) . '</b>';
+    }
+    if ($k) {
+        echo ' ' . loca('CRYSTAL') . ': <b>' . nicenum($k) . '</b>';
+    }
+    if ($d) {
+        echo ' ' . loca('DEUTERIUM') . ': <b>' . nicenum($d) . '</b>';
+    }
+    if ($e) {
+        echo ' ' . loca('ENERGY') . ': <b>' . nicenum($e) . '</b>';
+    }
+
+    $t = ShipyardDuration($id, $aktplanet['b21'], $aktplanet['b15'], $speed);
+    echo '<br>' . loca('BUILD_DURATION') . ': ' . BuildDurationFormat($t) . '<br></th>';
+    echo '<td class=k>';
+
+    if (!checkRequirements($id, $GlobalUser, $aktplanet)['met']) {
+        echo '<font color=#FF0000>' . loca('BUILD_SHIPYARD_CANT') . '</font>';
+    } elseif (IsEnoughResources($aktplanet, $m, $k, $d, $e) && !$busy) {
+        echo "<input type=text name='fmenge[$id]' alt='" . loca("NAME_$id") . "' size=6 maxlength=6 value=0 tabindex=1> ";
+
+        if ($premium['commander']) {
+            $max = calculateMaxAffordable($aktplanet, $m, $k, $d);
+
+            // Special handling for domes (max 1)
+            if ($id === GID_D_SDOME || $id === GID_D_LDOME) {
+                $max = 1;
             }
 
-            echo "<tr>    			";
-            if ( $GlobalUser['useskin'] ) {
-                echo "                <td class=l>\n";
-                echo "    			<a href=index.php?page=infos&session=$session&gid=$id>\n";
-                echo "    			<img border='0' src=\"".UserSkin()."gebaeude/$id.gif\" align='top' width='120' height='120'>\n";
-                echo "    			</a>\n";
-                echo "    			</td>\n";
-                echo "        <td class=l >";
-            }
-            else echo "        <td class=l colspan=2>";
-            echo "<a href=index.php?page=infos&session=$session&gid=$id>".loca("NAME_$id")."</a>";
-            if ($aktplanet['f'.$id]) echo "</a> (".va(loca("BUILD_SHIPYARD_UNITS"), $aktplanet['f'.$id]).")";
-            $res = ShipyardPrice ( $id );
-            $m = $res['m']; $k = $res['k']; $d = $res['d']; $e = $res['e'];
-            echo "<br>".loca("SHORT_$id")."<br>".loca("BUILD_PRICE").":";
-            if ($m) echo " ".loca("METAL").": <b>".nicenum($m)."</b>";
-            if ($k) echo " ".loca("CRYSTAL").": <b>".nicenum($k)."</b>";
-            if ($d) echo " ".loca("DEUTERIUM").": <b>".nicenum($d)."</b>";
-            if ($e) echo " ".loca("ENERGY").": <b>".nicenum($e)."</b>";
-            $t = ShipyardDuration ( $id, $aktplanet['b21'], $aktplanet['b15'], $speed );
-            echo "<br>".loca("BUILD_DURATION").": ".BuildDurationFormat ( $t )."<br></th>";
-            echo "<td class=k >";
-            if ( !ShipyardMeetRequirement ( $GlobalUser, $aktplanet, $id ) ) echo "<font color=#FF0000>".loca("BUILD_SHIPYARD_CANT")."</font>";
-            else if (IsEnoughResources ( $aktplanet, $m, $k, $d, $e ) && !$busy) {
-                echo "<input type=text name='fmenge[$id]' alt='".loca("NAME_$id")."' size=6 maxlength=6 value=0 tabindex=1> ";
-                if ( $prem['commander'] ) {
-                    $max = $GlobalUni['max_werf'];
-                    if ( $m ) $max = floor (min ($max, $aktplanet['m'] / $m));
-                    if ( $k ) $max = floor (min ($max, $aktplanet['k'] / $k));
-                    if ( $d ) $max = floor (min ($max, $aktplanet['d'] / $d));
-                    echo "<br><a href=\"javascript:setMax($id, $max);\">(max. $max)</a>";
+            // Special handling for missiles
+            if ($id === GID_D_ABM || $id === GID_D_IPM) {
+                $freeSpace = calculateFreeSiloSpace($aktplanet);
+                if ($id === GID_D_ABM) {
+                    $max = min($max, $freeSpace);
+                } else {
+                    $max = min($max, (int) floor($freeSpace / IPM_SILO_SIZE));
                 }
             }
-            echo "</td></tr>";
-        }
 
-        // Build Button.
-        echo "<td class=c colspan=2 align=center><input type=submit value=\"".loca("BUILD_SHIPYARD_SUBMIT")."\"></td></tr>";
+            // Apply universe limit
+            global $GlobalUni;
+            $max = min($max, $GlobalUni['max_werf']);
+
+            echo "<br><a href=\"javascript:setMax($id, $max);\">(max. $max)</a>";
+        }
     }
-    else {
-        if (!$busy) echo "<table><tr><td class=c>".loca("BUILD_ERROR_SHIPYARD_REQUIRED")."</td></tr></table>";
-    }
+
+    echo '</td></tr>';
 }
 
+/**
+ * Render shipyard/defense build section
+ */
+function renderShipyardSection(
+    array $aktplanet,
+    array $GlobalUser,
+    string $session,
+    string $mode,
+    int $speed,
+    array $unitMap
+): void {
+    $busy = isShipyardBusy($aktplanet);
+    $unitType = ($mode === 'Flotte') ? 'f' : 'd';
 
-// ************************************************ Defense ************************************************ 
-
-if ( $_GET['mode'] === "Verteidigung" )
-{
-    $prem = PremiumStatus ($GlobalUser);
-
-    // Check to see if a Shipyard or Nanite Factory is under construction.
-    $result = GetBuildQueue ( $aktplanet['planet_id'] );
-    $queue = dbarray ( $result );
-    $busy = ( $queue['tech_id'] == GID_B_SHIPYARD || $queue['tech_id'] == GID_B_NANITES ) ;
-
-    if ( $busy ) {
-        echo "<br><br><font color=#FF0000>".loca("BUILD_ERROR_SHIPYARD_BUSY")."</font><br><br>";
+    if ($busy) {
+        echo '<br><br><font color=#FF0000>' . loca('BUILD_ERROR_SHIPYARD_BUSY') . '</font><br><br>';
     }
-    if ( $GlobalUser['vacation'] ) {
-        echo "<font color=#FF0000><center>".va(loca("BUILD_ERROR_VACATION"), date ("Y-m-d H:i:s", $GlobalUser['vacation_until']))."</center></font>";
+    if ($GlobalUser['vacation']) {
+        echo '<font color=#FF0000><center>' . va(loca('BUILD_ERROR_VACATION'), date('Y-m-d H:i:s', $GlobalUser['vacation_until'])) . '</center></font>';
     }
-    echo "<form action=index.php?page=buildings&session=$session&mode=".$_GET['mode']." method=post>";
-    echo "<table align=top><tr><td style='background-color:transparent;'>  ";
-    if ( $GlobalUser['useskin'] ) echo "<table width=\"530\">\n";
-    else echo "<table width=\"468\">\n";
-    echo "          <tr> \n";
-    echo "          <td class=l colspan=\"2\">".loca("BUILD_DESC")."</td> \n";
-    echo "          <td class=l><b>".loca("BUILD_AMOUNT")."</b></td> \n";
-    echo "          </tr> \n\n";
 
-    // See if there's a shipyard on the planet.
-    if ( $aktplanet['b21'] ) {
-        // Output the objects that can be built in the Shipyard.
-        foreach ( $defmap as $i => $id ) {
-            if ( !ShipyardMeetRequirement ( $GlobalUser, $aktplanet, $id ) )
-            {
-                if($aktplanet['d'.$id] == 0) continue;
-            }
+    echo "<form action=index.php?page=buildings&session=$session&mode=$mode method=post>";
+    echo "<table align=top><tr><td style='background-color:transparent;'>";
 
-            echo "<tr>    			";
-            if ( $GlobalUser['useskin'] ) {
-                echo "                <td class=l>\n";
-                echo "    			<a href=index.php?page=infos&session=$session&gid=$id>\n";
-                echo "    			<img border='0' src=\"".UserSkin()."gebaeude/$id.gif\" align='top' width='120' height='120'>\n";
-                echo "    			</a>\n";
-                echo "    			</td>\n";
-                echo "        <td class=l >";
-            }
-            else echo "        <td class=l colspan=2>";
-            echo "<a href=index.php?page=infos&session=$session&gid=$id>".loca("NAME_$id")."</a>";
-            if ($aktplanet['d'.$id]) echo "</a> (".va(loca("BUILD_SHIPYARD_UNITS"), $aktplanet['d'.$id]).")";
-            $res = ShipyardPrice ( $id );
-            $m = $res['m']; $k = $res['k']; $d = $res['d']; $e = $res['e'];
-            echo "<br>".loca("SHORT_$id")."<br>".loca("BUILD_PRICE").":";
-            if ($m) echo " ".loca("METAL").": <b>".nicenum($m)."</b>";
-            if ($k) echo " ".loca("CRYSTAL").": <b>".nicenum($k)."</b>";
-            if ($d) echo " ".loca("DEUTERIUM").": <b>".nicenum($d)."</b>";
-            if ($e) echo " ".loca("ENERGY").": <b>".nicenum($e)."</b>";
-            $t = ShipyardDuration ( $id, $aktplanet['b21'], $aktplanet['b15'], $speed );
-            echo "<br>".loca("BUILD_DURATION").": ".BuildDurationFormat ( $t )."<br></th>";
-            echo "<td class=k >";
-            if ( !$busy ) {
-                if ( ($id == GID_D_SDOME || $id == GID_D_LDOME) && $aktplanet['d'.$id] > 0 ) echo "<font color=#FF0000>".loca("BUILD_ERROR_DOME")."</font>";
-                else if ( !ShipyardMeetRequirement ( $GlobalUser, $aktplanet, $id ) ) echo "<font color=#FF0000>".loca("BUILD_SHIPYARD_CANT")."</font>";
-                else if (IsEnoughResources ( $aktplanet, $m, $k, $d, $e ) ) {
-                    echo "<input type=text name='fmenge[$id]' alt='".loca("NAME_$id")."' size=6 maxlength=6 value=0 tabindex=1> ";
-                    if ( $prem['commander'] && !( $id == GID_D_SDOME || $id == GID_D_LDOME ) ) {
-                        if ( $id == GID_D_ABM ) $max = $aktplanet['b44'] * 10 - (2*$aktplanet['d503'] + $aktplanet['d502']);
-                        else if ( $id == GID_D_IPM ) $max = ($aktplanet['b44'] * 10 - (2*$aktplanet['d503'] + $aktplanet['d502'])) / 2;
-                        else $max = $GlobalUni['max_werf'];
-                        if ( $m ) $max = floor (min ($max, $aktplanet['m'] / $m));
-                        if ( $k ) $max = floor (min ($max, $aktplanet['k'] / $k));
-                        if ( $d ) $max = floor (min ($max, $aktplanet['d'] / $d));
-                        echo "<br><a href=\"javascript:setMax($id, $max);\">(max. $max)</a>";
-                    }
+    if ($GlobalUser['useskin']) {
+        echo "<table width=\"530\">\n";
+    } else {
+        echo "<table width=\"468\">\n";
+    }
+
+    echo "<tr>\n";
+    echo '<td class=l colspan="2">' . loca('BUILD_DESC') . "</td>\n";
+    echo '<td class=l><b>' . loca('BUILD_AMOUNT') . "</b></td>\n";
+    echo "</tr>\n\n";
+
+    if ($aktplanet['b21']) {
+        foreach ($unitMap as $id) {
+            // Skip units that don't meet requirements and have zero count
+            if (!checkRequirements($id, $GlobalUser, $aktplanet)['met']) {
+                if ($aktplanet[$unitType . $id] <= 0) {
+                    continue;
                 }
             }
-            echo "</td></tr>";
+
+            // Special check for domes
+            if ($unitType === 'd' && ($id === GID_D_SDOME || $id === GID_D_LDOME)) {
+                if ($aktplanet[$unitType . $id] > 0 && !$busy) {
+                    // Dome already exists, show warning instead of input
+                    renderUnitRowWithDomeWarning($id, $aktplanet, $session, $GlobalUser, $speed);
+                    continue;
+                }
+            }
+
+            renderUnitRow($id, $aktplanet, $session, $GlobalUser, $speed, $busy, $unitType);
         }
-    
-        // Build Button.
-        echo "<td class=c colspan=2 align=center><input type=submit value=\"".loca("BUILD_SHIPYARD_SUBMIT")."\"></td></tr>";
+
+        echo '<td class=c colspan=2 align=center><input type=submit value="' . loca('BUILD_SHIPYARD_SUBMIT') . '"></td></tr>';
+    } else {
+        if (!$busy) {
+            echo '<table><tr><td class=c>' . loca('BUILD_ERROR_SHIPYARD_REQUIRED') . '</td></tr></table>';
+        }
     }
-    else {
-        if (!$busy) echo "<table><tr><td class=c>".loca("BUILD_ERROR_SHIPYARD_REQUIRED")."</td></tr></table>";
-    }
+
+    echo '</table>';
+    echo '</form>';
+    echo "</table>\n";
 }
 
-// ************************************************ Research ************************************************ 
-
-if ( $_GET['mode'] === "Forschung" )
+/**
+ * Check if shipyard or nanite factory is under construction
+ */
+function isShipyardBusy(array $planet): bool
 {
-    $prem = PremiumStatus ($GlobalUser);
-    if ( $prem['technocrat'] ) $r_factor = 1.1;
-    else $r_factor = 1.0;
+    $result = GetBuildQueue($planet['planet_id']);
+    $queue = dbarray($result);
 
-    // Is the research lab being upgraded on any planet?
-    $query = "SELECT * FROM ".$db_prefix."queue WHERE obj_id = ".GID_B_RES_LAB." AND (type = 'Build' OR type = 'Demolish') AND start < $now AND owner_id = " . $GlobalUser['player_id'];
-    $result = dbquery ( $query );
-    $busy = ( dbrows ($result) > 0 );
+    return $queue && ($queue['tech_id'] == GID_B_SHIPYARD || $queue['tech_id'] == GID_B_NANITES);
+}
 
-    // Check to see if the research is in progress.
-    $res = GetResearchQueue ( $GlobalUser['player_id'] );
-    $resq = dbarray ($res);
-    $operating =  ( $resq != null );
+/**
+ * Check if research lab is being upgraded on any planet
+ */
+function isResearchLabBusy(int $playerId, int $now): bool
+{
+    global $db_prefix;
 
-    if ( $busy ) {
-        echo "<br><br><font color=#FF0000>".loca("BUILD_ERROR_RESLAB_BUSY")."</font><br /><br />";
+    $query = "SELECT * FROM {$db_prefix}queue WHERE obj_id = " . GID_B_RES_LAB .
+             " AND (type = 'Build' OR type = 'Demolish') AND start < $now AND owner_id = $playerId";
+    $result = dbquery($query);
+
+    return dbrows($result) > 0;
+}
+
+/**
+ * Render research timer countdown JavaScript
+ */
+function renderResearchTimer(array $researchQueue, array $aktplanet, string $session): void
+{
+    $endTime = $researchQueue['end'] - time();
+    $sessionVar = htmlspecialchars($session);
+    $planetId = $aktplanet['planet_id'];
+    $objId = $researchQueue['obj_id'];
+    $subId = $researchQueue['sub_id'];
+    $completeText = loca('BUILD_COMPLETE');
+    $nextText = loca('BUILD_RESEARCH_NEXT');
+    $cancelText = loca('BUILD_CANCEL');
+    $showCancel = ($aktplanet['planet_id'] == $researchQueue['sub_id']) ? 'true' : 'false';
+
+    echo <<<HTML
+<div id="bxx" class="z"></div>
+<script type="text/javascript">
+v=new Date();
+var bxx=document.getElementById('bxx');
+function t(){
+    n=new Date();
+    ss=$endTime;
+    s=ss-Math.round((n.getTime()-v.getTime())/1000.);
+    m=0;h=0;
+    if(s<0){
+        bxx.innerHTML='$completeText<br><a href=index.php?page=buildings&session=$sessionVar&mode=Forschung&cp=$planetId>$nextText</a>';
+    }else{
+        if(s>59){
+            m=Math.floor(s/60);
+            s=s-m*60
+        }
+        if(m>59){
+            h=Math.floor(m/60);
+            m=m-h*60
+        }
+        if(s<10){
+            s="0"+s
+        }
+        if(m<10){
+            m="0"+m
+        }
+        var cancelLink = $showCancel ? '">$cancelText</a>"' : '';
+        bxx.innerHTML=h+":"+m+":"+s+"<br><a href=index.php?page=buildings&session=$sessionVar&unbau=$objId&mode=Forschung&cp=$subId"+cancelLink;
     }
-    if ( $GlobalUser['vacation'] ) {
-        echo "<font color=#FF0000><center>".va(loca("BUILD_ERROR_VACATION"), date ("Y-m-d H:i:s", $GlobalUser['vacation_until']))."</center></font>";
+    window.setTimeout("t();",999);
+}
+window.onload=t;
+</script>
+HTML;
+}
+
+/**
+ * Render single research row
+ */
+function renderResearchRow(
+    int $id,
+    array $aktplanet,
+    array $GlobalUser,
+    string $session,
+    int $speed,
+    float $researchFactor,
+    bool $operating,
+    ?array $researchQueue
+): void {
+    $useSkin = (bool) $GlobalUser['useskin'];
+    $premium = PremiumStatus($GlobalUser);
+    $reslab = ResearchNetwork($aktplanet['planet_id'], $id);
+    $level = $GlobalUser['r' . $id] + 1;
+
+    echo '<tr>';
+
+    if ($useSkin) {
+        echo "<td class=l>\n";
+        echo "<a href=index.php?page=infos&session=$session&gid=$id>\n";
+        echo "<img border='0' src=\"" . UserSkin() . "gebaeude/$id.gif\" align='top' width='120' height='120'>\n";
+        echo "</a>\n";
+        echo "</td>\n";
+        echo '<td class=l>';
+    } else {
+        echo '<td class=l colspan=2>';
     }
-    echo "<table align=top><tr><td style='background-color:transparent;'>  ";
-    if ( $GlobalUser['useskin'] ) echo "<table width=\"530\">\n";
-    else echo "<table width=\"468\">\n";
-    echo "          <tr> \n";
-    echo "          <td class=l colspan=\"2\">".loca("BUILD_DESC")."</td> \n";
-    echo "          <td class=l><b>".loca("BUILD_AMOUNT")."</b></td> \n";
-    echo "          </tr> \n\n";
 
-    // See if there's a lab on the planet.
-    if ( $aktplanet['b31'] ) {
-        // Display a list of available research
-        foreach ( $resmap as $i => $id ) {
-            if ( ! ResearchMeetRequirement ($GlobalUser, $aktplanet, $id) ) continue;
+    echo "<a href=index.php?page=infos&session=$session&gid=$id>" . loca("NAME_$id") . '</a>';
 
-            $reslab = ResearchNetwork ( $aktplanet['planet_id'], $id );
+    if ($GlobalUser['r' . $id]) {
+        echo ' (' . va(loca('BUILD_LEVEL'), $GlobalUser['r' . $id]);
 
-            $level = $GlobalUser['r'.$id]+1;
-            echo "<tr>             ";
-            if ( $GlobalUser['useskin'] ) {
-                echo "                <td class=l>\n";
-                echo "    			<a href=index.php?page=infos&session=$session&gid=$id>\n";
-                echo "    			<img border='0' src=\"".UserSkin()."gebaeude/$id.gif\" align='top' width='120' height='120'>\n";
-                echo "    			</a>\n";
-                echo "    			</td>\n";
-                echo "        <td class=l >";
+        if ($id == GID_R_ESPIONAGE && $premium['technocrat']) {
+            echo ' <b><font style="color:lime;">+2</font></b> ';
+            echo '<img border="0" src="img/technokrat_ikon.gif" alt="' . loca('PREM_TECHNOCRATE') . '" ';
+            echo "onmouseover=\"return overlib('<font color=white>" . loca('PREM_TECHNOCRATE') . "</font>', WIDTH, 100);\" ";
+            echo "onmouseout='return nd();' width=\"20\" height=\"20\" style=\"vertical-align:middle;\">";
+        }
+
+        echo ')';
+    }
+
+    $res = ResearchPrice($id, $level);
+    $m = $res['m'];
+    $k = $res['k'];
+    $d = $res['d'];
+    $e = $res['e'];
+
+    echo '<br>' . loca("SHORT_$id") . '<br>' . loca('BUILD_PRICE') . ':';
+    if ($m) {
+        echo ' ' . loca('METAL') . ': <b>' . nicenum($m) . '</b>';
+    }
+    if ($k) {
+        echo ' ' . loca('CRYSTAL') . ': <b>' . nicenum($k) . '</b>';
+    }
+    if ($d) {
+        echo ' ' . loca('DEUTERIUM') . ': <b>' . nicenum($d) . '</b>';
+    }
+    if ($e) {
+        echo ' ' . loca('ENERGY') . ': <b>' . nicenum($e) . '</b>';
+    }
+
+    $t = ResearchDuration($id, $level, $reslab, $speed * $researchFactor);
+    echo '<br>' . loca('BUILD_DURATION') . ': ' . BuildDurationFormat($t) . '<br></th>';
+    echo '<td class=k>';
+
+    if ($operating) {
+        if ($id == $researchQueue['obj_id']) {
+            renderResearchTimer($researchQueue, $aktplanet, $session);
+        } else {
+            echo ' - ';
+        }
+    } else {
+        if ($GlobalUser['r' . $id]) {
+            if (IsEnoughResources($aktplanet, $m, $k, $d, $e)) {
+                echo " <a href=index.php?page=buildings&session=$session&mode=Forschung&bau=$id>";
+                echo '<font color=#00FF00>' . va(loca('BUILD_RESEARCH_LEVEL'), $level) . '</font></a>';
+            } else {
+                echo '<font color=#FF0000>' . va(loca('BUILD_RESEARCH_LEVEL'), $level) . '</font>';
             }
-            else echo "        <td class=l colspan=2>";
-            echo "<a href=index.php?page=infos&session=$session&gid=$id>".loca("NAME_$id")."</a>";
-            if ($GlobalUser['r'.$id]) echo "</a> (" . va(loca("BUILD_LEVEL"), $GlobalUser['r'.$id]);
-            if ( $id == GID_R_ESPIONAGE && $prem['technocrat'] ) { 
-                echo " <b><font style=\"color:lime;\">+2</font></b> <img border=\"0\" src=\"img/technokrat_ikon.gif\" alt=\"".loca("PREM_TECHNOCRATE")."\" onmouseover=\"return overlib('<font color=white>".loca("PREM_TECHNOCRATE")."</font>', WIDTH, 100);\" onmouseout='return nd();' width=\"20\" height=\"20\" style=\"vertical-align:middle;\"> ";
+        } else {
+            if (IsEnoughResources($aktplanet, $m, $k, $d, $e)) {
+                echo " <a href=index.php?page=buildings&session=$session&mode=Forschung&bau=$id>";
+                echo '<font color=#00FF00>' . loca('BUILD_RESEARCH') . '</font></a>';
+            } else {
+                echo '<font color=#FF0000>' . loca('BUILD_RESEARCH') . '</font></a>';
             }
-            if ($GlobalUser['r'.$id]) echo ")";
-            $res = ResearchPrice ( $id, $level );
-            $m = $res['m']; $k = $res['k']; $d = $res['d']; $e = $res['e'];
-            echo "<br>".loca("SHORT_$id")."<br>".loca("BUILD_PRICE").":";
-            if ($m) echo " ".loca("METAL").": <b>".nicenum($m)."</b>";
-            if ($k) echo " ".loca("CRYSTAL").": <b>".nicenum($k)."</b>";
-            if ($d) echo " ".loca("DEUTERIUM").": <b>".nicenum($d)."</b>";
-            if ($e) echo " ".loca("ENERGY").": <b>".nicenum($e)."</b>";
-            $t = ResearchDuration ( $id, $level, $reslab, $speed * $r_factor );
-            echo "<br>".loca("BUILD_DURATION").": ".BuildDurationFormat ( $t )."<br></th>";
-            echo "<td class=k>";
-            if ( $operating )        // The research is in progress
-            {
-                if ( $id == $resq['obj_id'] )
-                {
-?>
-                <div id="bxx" class="z"></div>
-                <script   type="text/javascript">
-                v=new Date();
-                var bxx=document.getElementById('bxx');
-                function t(){
-                    n=new Date();
-                    ss=<?=($resq['end'] - time());?>;
-                    s=ss-Math.round((n.getTime()-v.getTime())/1000.);
-                    m=0;h=0;
-                    if(s<0){
-    
-                        bxx.innerHTML='<?=loca("BUILD_COMPLETE");?><br><a href=index.php?page=buildings&session=<?=$session;?>&mode=Forschung&cp=<?=$aktplanet['planet_id'];?> ><?=loca("BUILD_RESEARCH_NEXT");?></a>';
-                    }else{
-                        if(s>59){
-                            m=Math.floor(s/60);
-                            s=s-m*60
-                        }
-                        if(m>59){
-                            h=Math.floor(m/60);
-                            m=m-h*60
-                        }
-                        if(s<10){
-                            s="0"+s
-                        }
-                        if(m<10){
-                            m="0"+m
-                        }
-                        bxx.innerHTML=h+":"+m+":"+s+"<br><a href=index.php?page=buildings&session=<?=$session;?>&unbau=<?=$id;?>&mode=Forschung&cp=<?=$resq['sub_id'];?>"+
-                        <?php
-                    if ( $aktplanet['planet_id'] == $resq['sub_id'] )  echo "\">".loca("BUILD_CANCEL")."</a>\"";   ?>                }
-                    ;
-                    window.setTimeout("t();",999);
-                }
-                window.onload=t;
-                </script>
-<?php
-                }
-                else echo " - ";
-            }
-            else        // The research is not in progress.
-            {
-                if ($GlobalUser['r'.$id]) {
-                    if (IsEnoughResources ( $aktplanet, $m, $k, $d, $e ) ) echo " <a href=index.php?page=buildings&session=$session&mode=Forschung&bau=$id><font color=#00FF00>".va(loca("BUILD_RESEARCH_LEVEL"), $level)."</font></a>";
-                    else echo "<font color=#FF0000>".va(loca("BUILD_RESEARCH_LEVEL"), $level)."</font>";
-                }
-                else {
-                    if (IsEnoughResources ( $aktplanet, $m, $k, $d, $e ) ) echo " <a href=index.php?page=buildings&session=$session&mode=Forschung&bau=$id><font color=#00FF00>".loca("BUILD_RESEARCH")."</font></a>";
-                    else echo "<font color=#FF0000>".loca("BUILD_RESEARCH")."</font></a>";
-                }
-            }
-            echo "</td></tr>";
         }
     }
-    else {
-        if (!$busy) echo "<table><tr><td class=c>".loca("BUILD_ERROR_RESLAB_REQUIRED")."</td></tr></table>";
+
+    echo '</td></tr>';
+}
+
+/**
+ * Render research section
+ */
+function renderResearchSection(
+    array $aktplanet,
+    array $GlobalUser,
+    string $session,
+    int $speed,
+    int $now,
+    array $resMap
+): void {
+    $premium = PremiumStatus($GlobalUser);
+    $researchFactor = $premium['technocrat'] ? RESEARCH_TECHNOCRAT_BONUS : RESEARCH_DEFAULT_SPEED;
+
+    $busy = isResearchLabBusy((int) $GlobalUser['player_id'], $now);
+
+    $res = GetResearchQueue($GlobalUser['player_id']);
+    $researchQueue = dbarray($res);
+    if ($researchQueue === false) {
+        $researchQueue = null;
     }
+    $operating = ($researchQueue !== null);
+
+    if ($busy) {
+        echo '<br><br><font color=#FF0000>' . loca('BUILD_ERROR_RESLAB_BUSY') . '</font><br /><br />';
+    }
+    if ($GlobalUser['vacation']) {
+        echo '<font color=#FF0000><center>' . va(loca('BUILD_ERROR_VACATION'), date('Y-m-d H:i:s', $GlobalUser['vacation_until'])) . '</center></font>';
+    }
+
+    echo "<table align=top><tr><td style='background-color:transparent;'>";
+
+    if ($GlobalUser['useskin']) {
+        echo "<table width=\"530\">\n";
+    } else {
+        echo "<table width=\"468\">\n";
+    }
+
+    echo "<tr>\n";
+    echo '<td class=l colspan="2">' . loca('BUILD_DESC') . "</td>\n";
+    echo '<td class=l><b>' . loca('BUILD_AMOUNT') . "</b></td>\n";
+    echo "</tr>\n\n";
+
+    if ($aktplanet['b31']) {
+        foreach ($resMap as $id) {
+            if (!checkRequirements($id, $GlobalUser, $aktplanet)['met']) {
+                continue;
+            }
+
+            renderResearchRow($id, $aktplanet, $GlobalUser, $session, $speed, $researchFactor, $operating, $researchQueue);
+        }
+    } else {
+        if (!$busy) {
+            echo '<table><tr><td class=c>' . loca('BUILD_ERROR_RESLAB_REQUIRED') . '</td></tr></table>';
+        }
+    }
+
+    echo '</table>';
+    echo "</table>\n";
+}
+
+/**
+ * Render dome warning row
+ */
+function renderUnitRowWithDomeWarning(int $id, array $aktplanet, string $session, array $GlobalUser, int $speed): void
+{
+    $useSkin = (bool) $GlobalUser['useskin'];
+
+    echo '<tr>';
+
+    if ($useSkin) {
+        echo "<td class=l>\n";
+        echo "<a href=index.php?page=infos&session=$session&gid=$id>\n";
+        echo "<img border='0' src=\"" . UserSkin() . "gebaeude/$id.gif\" align='top' width='120' height='120'>\n";
+        echo "</a>\n";
+        echo "</td>\n";
+        echo '<td class=l>';
+    } else {
+        echo '<td class=l colspan=2>';
+    }
+
+    echo "<a href=index.php?page=infos&session=$session&gid=$id>" . loca("NAME_$id") . '</a>';
+    echo ' (' . va(loca('BUILD_SHIPYARD_UNITS'), $aktplanet['d' . $id]) . ')';
+
+    $res = ShipyardPrice($id);
+    $m = $res['m'];
+    $k = $res['k'];
+    $d = $res['d'];
+
+    echo '<br>' . loca("SHORT_$id") . '<br>' . loca('BUILD_PRICE') . ':';
+    if ($m) {
+        echo ' ' . loca('METAL') . ': <b>' . nicenum($m) . '</b>';
+    }
+    if ($k) {
+        echo ' ' . loca('CRYSTAL') . ': <b>' . nicenum($k) . '</b>';
+    }
+    if ($d) {
+        echo ' ' . loca('DEUTERIUM') . ': <b>' . nicenum($d) . '</b>';
+    }
+
+    $t = ShipyardDuration($id, $aktplanet['b21'], $aktplanet['b15'], $speed);
+    echo '<br>' . loca('BUILD_DURATION') . ': ' . BuildDurationFormat($t) . '<br></th>';
+    echo '<td class=k>';
+    echo '<font color=#FF0000>' . loca('BUILD_ERROR_DOME') . '</font>';
+    echo '</td></tr>';
+}
+
+// ************************************************ Shipyard ************************************************
+
+if ($_GET['mode'] === 'Flotte') {
+    renderShipyardSection($aktplanet, $GlobalUser, $session, 'Flotte', $speed, $fleetmap);
+}
+
+// ************************************************ Defense ************************************************
+
+if ($_GET['mode'] === 'Verteidigung') {
+    renderShipyardSection($aktplanet, $GlobalUser, $session, 'Verteidigung', $speed, $defmap);
+}
+
+// ************************************************ Research ************************************************
+
+if ($_GET['mode'] === 'Forschung') {
+    renderResearchSection($aktplanet, $GlobalUser, $session, $speed, $now, $resmap);
 }
 
 // ***********************************************************************
-
-echo "</table>";
-if ( $_GET['mode'] === "Verteidigung" || $_GET['mode'] === "Flotte" ) echo "</form>";
-echo "</table>\n";
-
-if ( $_GET['mode'] === "Verteidigung" || $_GET['mode'] === "Flotte" )
+/**
+ * Render shipyard queue JavaScript and UI
+ */
+function renderShipyardQueue(array $aktplanet, string $session, int $now): void
 {
-    $result = GetShipyardQueue ($aktplanet['planet_id']);
-    $rows = dbrows ($result);
-    if ($rows)
-    {
-        $first = true;
-        $c = "";
-        $b = "";
-        $a = "";
-        $total_time = 0;
-        while ($rows--)
-        {
-            $queue = dbarray ($result);
-            if ( $first ) {
-                $g = $now - $queue['start'];
-                $first = false;
-            }
-            $c .= ($queue['end'] - $queue['start']) . ",";
-            $b .= "\"".loca("NAME_".$queue['obj_id'])."\",";
-            $a .= "\"".$queue['level']."\",";
-            $total_time += ($queue['end'] - $queue['start']) * $queue['level'];
+    $result = GetShipyardQueue($aktplanet['planet_id']);
+    $rows = dbrows($result);
+
+    if (!$rows) {
+        return;
+    }
+
+    $first = true;
+    $durations = '';
+    $names = '';
+    $amounts = '';
+    $totalTime = 0;
+    $startOffset = 0;
+
+    while ($rows--) {
+        $queue = dbarray($result);
+        if ($first) {
+            $startOffset = $now - $queue['start'];
+            $first = false;
         }
-        $total_time -= $g;
-?>
+        $duration = $queue['end'] - $queue['start'];
+        $durations .= $duration . ',';
+        $names .= '"' . loca('NAME_' . $queue['obj_id']) . '",';
+        $amounts .= '"' . $queue['level'] . '",';
+        $totalTime += $duration * $queue['level'];
+    }
+    $totalTime -= $startOffset;
 
-      <br>Сейчас производится: <div id="bx" class="z"></div>
+    $completeText = loca('BUILD_SHIPYARD_COMPLETE');
+    $currentText = loca('BUILD_SHIPYARD_CURRENT');
+    $queueText = loca('BUILD_SHIPYARD_QUEUE');
+    $timeText = loca('BUILD_SHIPYARD_TIME');
+    $sessionEscaped = htmlspecialchars($session);
 
-<!-- JAVASCRIPT -->
-<script  type="text/javascript">
+    echo <<<HTML
+<br>Сейчас производится: <div id="bx" class="z"></div>
+
+<script type="text/javascript">
 v = new Date();
 p = 0;
-g = <?=$g;?>;
+g = $startOffset;
 s = 0;
 hs = 0;
 of = 1;
-c = new Array(<?=$c;?>"");
-b = new Array(<?=$b;?>"");
-a = new Array(<?=$a;?>"");
-aa = "<?=loca("BUILD_SHIPYARD_COMPLETE");?>";
-
+c = new Array($durations"");
+b = new Array($names"");
+a = new Array($amounts"");
+aa = "$completeText";
 
 function t() {
     if (hs == 0) {
@@ -471,15 +731,12 @@ function t() {
         m = "0" + m;
     }
     if (p > b.length - 2) {
-        document.getElementById("bx").innerHTML=aa ;
+        document.getElementById("bx").innerHTML=aa;
     } else {
         document.getElementById("bx").innerHTML=b[p]+" "+h+":"+m+":"+s;
     }
     window.setTimeout("t();", 200);
 }
-
-
-
 
 function xd() {
     while (document.Atr.auftr.length > 0) {
@@ -489,17 +746,13 @@ function xd() {
         document.Atr.auftr.options[document.Atr.auftr.length] = new Option(aa);
     }
     for (iv = p; iv <= b.length - 2; iv++) {
-        if (a[iv] < 2) {
-            ae=" ";
-        }else{
-            ae=" ";
-        }
+        ae = " ";
         if (iv == p) {
-            act = "<?=loca("BUILD_SHIPYARD_CURRENT");?>";
-        }else{
+            act = "$currentText";
+        } else {
             act = "";
         }
-        document.Atr.auftr.options[document.Atr.auftr.length] = new Option(a[iv]+ae+" \""+b[iv]+"\""+act, iv + of);
+        document.Atr.auftr.options[document.Atr.auftr.length] = new Option(a[iv]+ae+" \\""+b[iv]+"\\""+act, iv + of);
     }
 }
 
@@ -510,37 +763,42 @@ document.addEventListener("visibilitychange", function() {
     }
 });
 </script>
-<!-- JAVASCRIPT ENDE-->
-
 
 <br>
 <form name="Atr" method="get" action="index.php?page=buildings">
-<input type="hidden" name="session" value="<?=$session;?>">
+<input type="hidden" name="session" value="$sessionEscaped">
 <input type="hidden" name="mode" value="Flotte">
 <table width="530">
-
  <tr>
-    <td class="c" ><?=loca("BUILD_SHIPYARD_QUEUE");?></td>
+    <td class="c">$queueText</td>
  </tr>
  <tr>
-  <th ><select name="auftr" size="10"></select></th>
-   </tr>
+  <th><select name="auftr" size="10"></select></th>
+ </tr>
  <tr>
-  <td class="c" ></td>
-
+  <td class="c"></td>
  </tr>
 </table>
 </form>
-<?=loca("BUILD_SHIPYARD_TIME");?>
+$timeText
 
-  <?=BuildDurationFormat ($total_time); ?><br>
-<?php
-    }
+HTML;
+
+    echo BuildDurationFormat($totalTime) . "<br>\n";
+}
+
+echo '</table>';
+if ($_GET['mode'] === 'Verteidigung' || $_GET['mode'] === 'Flotte') {
+    echo '</form>';
+}
+echo "</table>\n";
+
+if ($_GET['mode'] === 'Verteidigung' || $_GET['mode'] === 'Flotte') {
+    renderShipyardQueue($aktplanet, $session, $now);
 }
 
 echo "<br><br><br><br>\n";
 EndContent();
 
-PageFooter ();
-ob_end_flush ();
-?>
+PageFooter();
+ob_end_flush();

@@ -2,23 +2,25 @@
 
 // Admin Area: Bot intelligence graphical editor.
 
-function Admin_Botedit ()
+function Admin_Botedit()
 {
     global $session;
     global $db_prefix;
     global $GlobalUser, $GlobalUni;
 
-    // GET request processing.
-    if ( method () === "GET" && key_exists('action', $_GET) && $GlobalUser['admin'] >= 2 )
-    {
-        if ( $_GET['action'] === "preview" ) {      // Preview
-            $id = intval ( $_GET['strat'] );
-            $query = "SELECT * FROM ".$db_prefix."botstrat WHERE id = $id LIMIT 1";
-            $result = dbquery ($query);
-            $row = dbarray ($result);
+    // Ensure admin localization is loaded for bot block labels
+    loca_add('admin', $GlobalUser['lang']);
 
-            ob_clean ();
-?>
+    // GET request processing.
+    if (method() === 'GET' && key_exists('action', $_GET) && $GlobalUser['admin'] >= 2) {
+        if ($_GET['action'] === 'preview') {      // Preview
+            $id = intval($_GET['strat']);
+            $query = 'SELECT * FROM ' . $db_prefix . "botstrat WHERE id = $id LIMIT 1";
+            $result = dbquery($query);
+            $row = dbarray($result);
+
+            ob_clean();
+            ?>
 
 <html>
 
@@ -39,6 +41,25 @@ function Admin_Botedit ()
 
 <script type="text/javascript" src="js/tw-sack.js"></script>
 <script type="text/javascript" src="js/go.js"></script>
+<script type="text/javascript">
+// Localized bot block definitions
+var botBlockLabels = {
+  mines: "<?=loca('BOT_BLOCK_MINES');?>",
+  basic: "<?=loca('BOT_BLOCK_BASIC');?>",
+  tech: "<?=loca('BOT_BLOCK_TECH');?>",
+  research: "<?=loca('BOT_BLOCK_RESEARCH');?>",
+  build: "<?=loca('BOT_BLOCK_BUILD');?>",
+  shipyard: "<?=loca('BOT_BLOCK_SHIPYARD');?>",
+  robotics: "<?=loca('BOT_BLOCK_ROBOTICS');?>",
+  reslab: "<?=loca('BOT_BLOCK_RESLAB');?>",
+  nanite: "<?=loca('BOT_BLOCK_NANITE');?>",
+  fusion: "<?=loca('BOT_BLOCK_FUSION');?>",
+  terraformer: "<?=loca('BOT_BLOCK_TERRAFORMER');?>",
+  silo: "<?=loca('BOT_BLOCK_SILO');?>",
+  speed: "<?=loca('BOT_BLOCK_SPEED');?>",
+  sleep: "<?=loca('BOT_BLOCK_SLEEP');?>"
+};
+</script>
 <script type="text/javascript" src="js/go-game.js"></script>
 
 <div id="sample">
@@ -72,90 +93,106 @@ function Admin_Botedit ()
 </html>
 
 <?php
-            die ();
+                        die();
         }
     }
 
     // POST request processing.
-    if ( method () === "POST" && key_exists('action', $_POST) && $GlobalUser['admin'] >= 2 )
-    {
-        if ( $_POST['action'] === "load" ) {        // Load
-            $id = intval ( $_POST['strat'] );
-            $query = "SELECT * FROM ".$db_prefix."botstrat WHERE id = $id LIMIT 1";
-            $result = dbquery ($query);
-            $row = dbarray ($result);
-            ob_clean ();
-            setcookie ( "uni".$GlobalUni['num']."_".$GlobalUser['name']."_strategy", $id, 9999 );
-            die ($row['source']);
-        }
-        else if ( $_POST['action'] === "save" ) {    // Save
-            $id = intval ( $_POST['strat'] );
+    if (method() === 'POST' && key_exists('action', $_POST) && $GlobalUser['admin'] >= 2) {
+        if ($_POST['action'] === 'load') {        // Load
+            $id = intval($_POST['strat']);
+            $query = 'SELECT * FROM ' . $db_prefix . "botstrat WHERE id = $id LIMIT 1";
+            $result = dbquery($query);
+            $row = dbarray($result);
+            ob_clean();
+            setcookie('uni' . $GlobalUni['num'] . '_' . $GlobalUser['name'] . '_strategy', $id, 9999);
+            die($row['source'] !== null ? $row['source'] : '');
+        } elseif ($_POST['action'] === 'save') {    // Save
+            $id = intval($_POST['strat']);
 
             // Save the current source to a backup
-            $query = "SELECT * FROM ".$db_prefix."botstrat WHERE id = $id LIMIT 1";
-            $result = dbquery ($query);
-            $row = dbarray ($result);
-            $query = "UPDATE ".$db_prefix."botstrat SET source = '".$row['source']."' WHERE id = 1;";
-            dbquery ( $query );
+            $query = 'SELECT * FROM ' . $db_prefix . "botstrat WHERE id = $id LIMIT 1";
+            $result = dbquery($query);
+            $row = dbarray($result);
+            $query = 'UPDATE ' . $db_prefix . "botstrat SET source = '" . $row['source'] . "' WHERE id = 1;";
+            dbquery($query);
 
-            $source = urldecode ( $_POST['source'] );
-            $source = addslashes ( $source );
-            $query = "UPDATE ".$db_prefix."botstrat SET source = '".$source."' WHERE id = $id;";
-            dbquery ( $query );
-            ob_clean ();
-            die ();
-        }
-        else if ( $_POST['action'] === "new" ) {    // New strategy
+            $source = urldecode($_POST['source']);
+            $source = addslashes($source);
+            $query = 'UPDATE ' . $db_prefix . "botstrat SET source = '" . $source . "' WHERE id = $id;";
+            dbquery($query);
+            ob_clean();
+            die();
+        } elseif ($_POST['action'] === 'new') {    // New strategy
             $name = $_POST['name'];
-            $name = addslashes ( $name );
-            $source = "{ \"class\": \"go.GraphLinksModel\",
-                         \"linkFromPortIdProperty\": \"fromPort\",
-                         \"linkToPortIdProperty\": \"toPort\",
-                         \"nodeDataArray\": [ ],
-                         \"linkDataArray\": [ ]}";
-            $strat = array ( '', $name, $source );
-            AddDBRow ($strat, 'botstrat');
-            ob_clean ();
-            die ( );
-        }
-        else if ( $_POST['action'] === "rename" ) {    // Rename
-            $id = intval ( $_POST['strat'] );
+            $name = addslashes($name);
+            $source = '{ "class": "go.GraphLinksModel",
+                         "linkFromPortIdProperty": "fromPort",
+                         "linkToPortIdProperty": "toPort",
+                         "nodeDataArray": [ ],
+                         "linkDataArray": [ ]}';
+            $strat = [ '', $name, $source ];
+            AddDBRow($strat, 'botstrat');
+            ob_clean();
+            die();
+        } elseif ($_POST['action'] === 'rename') {    // Rename
+            $id = intval($_POST['strat']);
             $name = $_POST['name'];
-            $name = addslashes ( $name );
-            $query = "UPDATE ".$db_prefix."botstrat SET name = '".$name."' WHERE id = $id;";
-            dbquery ( $query );
-            ob_clean ();
-            $query = "SELECT * FROM ".$db_prefix."botstrat ORDER BY id ASC";
-            $result = dbquery ($query);
-            echo "<option value=\"0\">".loca("ADM_BOTEDIT_CHOOSE")."</option>\n";
-            while ($row = dbarray ($result) ) {
-                echo "<option value=\"".$row['id']."\"  ";
-                if ( $row['id'] == $id ) echo "selected";
-                echo ">".stripslashes($row['name'])."</option>\n";
+            $name = addslashes($name);
+            $query = 'UPDATE ' . $db_prefix . "botstrat SET name = '" . $name . "' WHERE id = $id;";
+            dbquery($query);
+            ob_clean();
+            $query = 'SELECT * FROM ' . $db_prefix . 'botstrat ORDER BY id ASC';
+            $result = dbquery($query);
+            echo '<option value="0">' . loca('ADM_BOTEDIT_CHOOSE') . "</option>\n";
+            while ($row = dbarray($result)) {
+                echo '<option value="' . $row['id'] . '"  ';
+                if ($row['id'] == $id) {
+                    echo 'selected';
+                }
+                echo '>' . stripslashes($row['name']) . "</option>\n";
             }
-            die ( );
-        }
-        else {
-            ob_clean ();
-            die ();
+            die();
+        } else {
+            ob_clean();
+            die();
         }
     }
 
-?>
+    ?>
 
 <script type="text/javascript" src="js/tw-sack.js"></script>
 <script type="text/javascript" src="js/go.js"></script>
+<script type="text/javascript">
+// Localized bot block definitions
+var botBlockLabels = {
+  mines: "<?=loca('BOT_BLOCK_MINES');?>",
+  basic: "<?=loca('BOT_BLOCK_BASIC');?>",
+  tech: "<?=loca('BOT_BLOCK_TECH');?>",
+  research: "<?=loca('BOT_BLOCK_RESEARCH');?>",
+  build: "<?=loca('BOT_BLOCK_BUILD');?>",
+  shipyard: "<?=loca('BOT_BLOCK_SHIPYARD');?>",
+  robotics: "<?=loca('BOT_BLOCK_ROBOTICS');?>",
+  reslab: "<?=loca('BOT_BLOCK_RESLAB');?>",
+  nanite: "<?=loca('BOT_BLOCK_NANITE');?>",
+  fusion: "<?=loca('BOT_BLOCK_FUSION');?>",
+  terraformer: "<?=loca('BOT_BLOCK_TERRAFORMER');?>",
+  silo: "<?=loca('BOT_BLOCK_SILO');?>",
+  speed: "<?=loca('BOT_BLOCK_SPEED');?>",
+  sleep: "<?=loca('BOT_BLOCK_SLEEP');?>"
+};
+</script>
 <script type="text/javascript" src="js/go-game.js"></script>
 
 <?=AdminPanel();?>
 
 <?php
-    if ( $GlobalUser['admin'] < 2) {
+        if ($GlobalUser['admin'] < 2) {
 
-        echo "<font color=red>".loca("ADM_BOTEDIT_FORBIDDEN")."</font>";
-        return;
-    }
-?>
+            echo '<font color=red>' . loca('ADM_BOTEDIT_FORBIDDEN') . '</font>';
+            return;
+        }
+    ?>
 
 <div id="sample">
   <div style="width:100%; white-space:nowrap;">
@@ -169,24 +206,24 @@ function Admin_Botedit ()
 
 <span style="float:left;">
  <input type="text" size="50" id="strategyName">
- <button onclick="newstrat()"><?=loca("ADM_BOTEDIT_NEW");?></button>
- <button onclick="rename()"><?=loca("ADM_BOTEDIT_RENAME");?></button>
- <button onclick="showimg()"><?=loca("ADM_BOTEDIT_SHOW");?></button>
+ <button onclick="newstrat()"><?=loca('ADM_BOTEDIT_NEW');?></button>
+ <button onclick="rename()"><?=loca('ADM_BOTEDIT_RENAME');?></button>
+ <button onclick="showimg()"><?=loca('ADM_BOTEDIT_SHOW');?></button>
 </span>
 
 <span style="float:right;">
-  <button onclick="save()"><?=loca("ADM_BOTEDIT_SAVE");?></button>
+  <button onclick="save()"><?=loca('ADM_BOTEDIT_SAVE');?></button>
 <select id="strategyId">
-<option value="0"><?=loca("ADM_BOTEDIT_CHOOSE");?></option>
+<option value="0"><?=loca('ADM_BOTEDIT_CHOOSE');?></option>
 <?php
-    $query = "SELECT * FROM ".$db_prefix."botstrat ORDER BY id ASC";
-    $result = dbquery ($query);
-    while ($row = dbarray ($result) ) {
-        echo "<option value=\"".$row['id']."\">".stripslashes($row['name'])."</option>\n";
+        $query = 'SELECT * FROM ' . $db_prefix . 'botstrat ORDER BY id ASC';
+    $result = dbquery($query);
+    while ($row = dbarray($result)) {
+        echo '<option value="' . $row['id'] . '">' . stripslashes($row['name']) . "</option>\n";
     }
-?>
+    ?>
 </select>
-  <button onclick="load()"><?=loca("ADM_BOTEDIT_LOAD");?></button>
+  <button onclick="load()"><?=loca('ADM_BOTEDIT_LOAD');?></button>
 </span>
   <textarea id="mySavedModel" style="width:100%;height:300px; display:none;">
 { "class": "go.GraphLinksModel",

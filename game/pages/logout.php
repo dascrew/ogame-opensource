@@ -2,13 +2,13 @@
 
 // Logout
 
-loca_add ( "reg", $GlobalUser['lang'] );
+loca_add('reg', $GlobalUser['lang']);
 
-$aktplanet = GetPlanet ( $GlobalUser['aktplanet']);
-UpdatePlanetActivity ( $aktplanet['planet_id'] );
-UpdateLastClick ( $GlobalUser['player_id'] );
+$aktplanet = GetPlanet($GlobalUser['aktplanet']);
+UpdatePlanetActivity($aktplanet['planet_id']);
+UpdateLastClick($GlobalUser['player_id']);
 
-Logout ( $_GET['session'] );
+Logout($_GET['session']);
 ?>
 
 <html>
@@ -22,7 +22,7 @@ Logout ( $_GET['session'] );
 
 <body topmargin='0' leftmargin='0' marginwidth='0' marginheight='0' >
 <center>
-<?=loca("REG_LOGOUT");?><br />
+<?=loca('REG_LOGOUT');?><br />
 <p>
              </p>
 </center>

@@ -4,79 +4,80 @@
 
 // Parameter passing between Fleet 1,2,3 pages is done via hidden POST parameters.
 
-$FleetMessage = "";
-$FleetError = "";
+$FleetMessage = '';
+$FleetError = '';
 
-loca_add ( "menu", $GlobalUser['lang'] );
-loca_add ( "fleetorder", $GlobalUser['lang'] );
-loca_add ( "fleet", $GlobalUser['lang'] );
+loca_add('menu', $GlobalUser['lang']);
+loca_add('fleetorder', $GlobalUser['lang']);
+loca_add('fleet', $GlobalUser['lang']);
 
-if ( key_exists ('cp', $_GET)) SelectPlanet ($GlobalUser['player_id'], intval($_GET['cp']));
-$GlobalUser['aktplanet'] = GetSelectedPlanet ($GlobalUser['player_id']);
+if (key_exists('cp', $_GET)) {
+    SelectPlanet($GlobalUser['player_id'], intval($_GET['cp']));
+}
+$GlobalUser['aktplanet'] = GetSelectedPlanet($GlobalUser['player_id']);
 $now = time();
-UpdateQueue ( $now );
-$aktplanet = GetPlanet ( $GlobalUser['aktplanet'] );
-ProdResources ( $aktplanet, $aktplanet['lastpeek'], $now );
-UpdatePlanetActivity ( $aktplanet['planet_id'] );
-UpdateLastClick ( $GlobalUser['player_id'] );
+UpdateQueue($now);
+$aktplanet = GetPlanet($GlobalUser['aktplanet']);
+ProdResources($aktplanet, $aktplanet['lastpeek'], $now);
+UpdatePlanetActivity($aktplanet['planet_id']);
+UpdateLastClick($GlobalUser['player_id']);
 $session = $_GET['session'];
 
-function FleetMissionText ($num)
+function FleetMissionText($num)
 {
-    if ($num >= FTYP_ORBITING)
-    {
-        $desc = "<a title=\"".loca("FLEET1_HOLD")."\">".loca("FLEET1_HOLD_SHORT")."</a>";
+    if ($num >= FTYP_ORBITING) {
+        $desc = '<a title="' . loca('FLEET1_HOLD') . '">' . loca('FLEET1_HOLD_SHORT') . '</a>';
         $num -= FTYP_ORBITING;
-    }
-    else if ($num >= FTYP_RETURN)
-    {
-        $desc = "<a title=\"".loca("FLEET1_RETURN")."\">".loca("FLEET1_RETURN_SHORT")."</a>";
+    } elseif ($num >= FTYP_RETURN) {
+        $desc = '<a title="' . loca('FLEET1_RETURN') . '">' . loca('FLEET1_RETURN_SHORT') . '</a>';
         $num -= FTYP_RETURN;
+    } else {
+        $desc = '<a title="' . loca('FLEET1_FLYING') . '">' . loca('FLEET1_FLYING_SHORT') . '</a>';
     }
-    else $desc = "<a title=\"".loca("FLEET1_FLYING")."\">".loca("FLEET1_FLYING_SHORT")."</a>";
 
-    echo "      <a title=\"\">".loca("FLEET_ORDER_$num")."</a>\n$desc\n";
+    echo '      <a title="">' . loca("FLEET_ORDER_$num") . "</a>\n$desc\n";
 }
 
 $union_id = 0;
-$uni = LoadUniverse ();
+$uni = LoadUniverse();
 
 // POST requests processing
-if ( method () === "POST" )
-{
-    if ( key_exists ( 'order_return', $_POST) )         // Fleet recall.
-    {
-        $fleet_id = intval ($_POST['order_return']);
-        $fleet_obj = LoadFleet ( $fleet_id );
-        if (  ($fleet_obj['owner_id'] == $GlobalUser['player_id']) &&
-              ($fleet_obj['mission'] < FTYP_RETURN || $fleet_obj['mission'] > FTYP_ORBITING )  ) 
-            RecallFleet ( $fleet_id );
+if (method() === 'POST') {
+    if (key_exists('order_return', $_POST)) {         // Fleet recall.
+        $fleet_id = intval($_POST['order_return']);
+        $fleet_obj = LoadFleet($fleet_id);
+        if (($fleet_obj['owner_id'] == $GlobalUser['player_id']) &&
+              ($fleet_obj['mission'] < FTYP_RETURN || $fleet_obj['mission'] > FTYP_ORBITING)) {
+            RecallFleet($fleet_id);
+        }
     }
 
-    if ( key_exists ( 'union_name', $_POST) && $uni['acs'] > 0 ) {
-        $fleet_id = intval ($_POST['flotten']);
-        $union_id = CreateUnion ($fleet_id, "KV" . $fleet_id);
-        RenameUnion ( $union_id, $_POST['union_name'] );    // rename
+    if (key_exists('union_name', $_POST) && $uni['acs'] > 0) {
+        $fleet_id = intval($_POST['flotten']);
+        $union_id = CreateUnion($fleet_id, 'KV' . $fleet_id);
+        RenameUnion($union_id, $_POST['union_name']);    // rename
     }
 
-    if ( key_exists ( 'user_name', $_POST) && $uni['acs'] > 0 ) { 
-        $fleet_id = intval ($_POST['flotten']);
-        $union_id = CreateUnion ($fleet_id, "KV" . $fleet_id);
-        $FleetError = AddUnionMember ( $union_id, $_POST['user_name'] );    // add player
+    if (key_exists('user_name', $_POST) && $uni['acs'] > 0) {
+        $fleet_id = intval($_POST['flotten']);
+        $union_id = CreateUnion($fleet_id, 'KV' . $fleet_id);
+        $FleetError = AddUnionMember($union_id, $_POST['user_name']);    // add player
     }
 }
 
-PageHeader ("flotten1");
+PageHeader('flotten1');
 
-$result = EnumOwnFleetQueue ( $GlobalUser['player_id'] );    // Number of fleets
-$nowfleet = $rows = dbrows ($result);
-$maxfleet = $GlobalUser['r'.GID_R_COMPUTER] + 1;
+$result = EnumOwnFleetQueue($GlobalUser['player_id']);    // Number of fleets
+$nowfleet = $rows = dbrows($result);
+$maxfleet = $GlobalUser['r' . GID_R_COMPUTER] + 1;
 
-$prem = PremiumStatus ($GlobalUser);
-if ( $prem['admiral'] ) $maxfleet += 2;
+$prem = PremiumStatus($GlobalUser);
+if ($prem['admiral']) {
+    $maxfleet += 2;
+}
 
-$expnum = GetExpeditionsCount ( $GlobalUser['player_id'] );    // Number of expeditions
-$maxexp = floor ( sqrt ( $GlobalUser['r124'] ) );
+$expnum = GetExpeditionsCount($GlobalUser['player_id']);    // Number of expeditions
+$maxexp = floor(sqrt($GlobalUser['r124']));
 
 BeginContent();
 ?>
@@ -96,21 +97,18 @@ BeginContent();
 
     <td style='background-color:transparent;'>
 <?php
-    if ($prem['admiral'])
-    {
-?>
-    <div style="margin-top:2;margin-bottom:2;"><?=va(loca("FLEET1_FLEETS"), $rows, $maxfleet-2);?> <b><font style="color:lime;">+2</font></b> <img border="0" alt="<?=loca("PR_ADMIRAL");?>" src="img/admiral_ikon.gif" onmouseover='return overlib("&lt;font color=white &gt;<?=loca("PR_ADMIRAL");?>&lt;/font&gt;", WIDTH, 100);' onmouseout="return nd();" width="20" height="20" style="vertical-align:middle;"></div>
+    if ($prem['admiral']) {
+        ?>
+    <div style="margin-top:2;margin-bottom:2;"><?=va(loca('FLEET1_FLEETS'), $rows, $maxfleet - 2);?> <b><font style="color:lime;">+2</font></b> <img border="0" alt="<?=loca('PR_ADMIRAL');?>" src="img/admiral_ikon.gif" onmouseover='return overlib("&lt;font color=white &gt;<?=loca('PR_ADMIRAL');?>&lt;/font&gt;", WIDTH, 100);' onmouseout="return nd();" width="20" height="20" style="vertical-align:middle;"></div>
 <?php
-    }
-    else
-    {
-?>
-    <?=va(loca("FLEET1_FLEETS"), $rows, $maxfleet);?>    </td>
+    } else {
+        ?>
+    <?=va(loca('FLEET1_FLEETS'), $rows, $maxfleet);?>    </td>
 <?php
     }
 ?>
     <td align=right style='background-color:transparent;'>
-      <?=va(loca("FLEET1_EXPEDITIONS"), $expnum, $maxexp);?>    
+      <?=va(loca('FLEET1_EXPEDITIONS'), $expnum, $maxexp);?>    
     </td>
     </tr>
     </table>
@@ -118,88 +116,83 @@ BeginContent();
 
    </tr>
      <tr height="20">
-    <th><?=loca("FLEET1_HEAD1");?></th>
-    <th><?=loca("FLEET1_HEAD2");?></th>
-    <th><?=loca("FLEET1_HEAD3");?></th>
-    <th><?=loca("FLEET1_HEAD4");?></th>
+    <th><?=loca('FLEET1_HEAD1');?></th>
+    <th><?=loca('FLEET1_HEAD2');?></th>
+    <th><?=loca('FLEET1_HEAD3');?></th>
+    <th><?=loca('FLEET1_HEAD4');?></th>
 
-    <th><?=loca("FLEET1_HEAD5");?></th>
-    <th><?=loca("FLEET1_HEAD6");?></th>
-    <th><?=loca("FLEET1_HEAD7");?></th>
-    <th><?=loca("FLEET1_HEAD8");?></th>
+    <th><?=loca('FLEET1_HEAD5');?></th>
+    <th><?=loca('FLEET1_HEAD6');?></th>
+    <th><?=loca('FLEET1_HEAD7');?></th>
+    <th><?=loca('FLEET1_HEAD8');?></th>
    </tr>
 <?php
 
-    if ($rows)
-    {
+    if ($rows) {
         $row = 1;
-        while ($rows--)
-        {
-            $queue = dbarray ($result);
-            $fleet = LoadFleet ($queue['sub_id']);
-            $origin = GetPlanet ($fleet['start_planet']);
-            $target = GetPlanet ($fleet['target_planet']);
-            $target_user = LoadUser ( $target['owner_id'] );
-?>
+        while ($rows--) {
+            $queue = dbarray($result);
+            $fleet = LoadFleet($queue['sub_id']);
+            $origin = GetPlanet($fleet['start_planet']);
+            $target = GetPlanet($fleet['target_planet']);
+            $target_user = LoadUser($target['owner_id']);
+            ?>
      <tr height="20">
     <th><?php echo $row;?></th>
 
     <th>
 <?php
-    echo FleetMissionText ($fleet['mission']);
-?>
+                echo FleetMissionText($fleet['mission']);
+            ?>
     </th>
     <th> <a title="<?php
-        $totalships = 0;
-        foreach ( $fleetmap as $i=>$gid)
-        {
-            if ( $fleet["ship$gid"] > 0 ) {
-                echo loca("NAME_$gid") . ": " . nicenum($fleet["ship$gid"]) . " \n";
-                $totalships += $fleet["ship$gid"];
+                    $totalships = 0;
+            foreach ($fleetmap as $i => $gid) {
+                if ($fleet["ship$gid"] > 0) {
+                    echo loca("NAME_$gid") . ': ' . nicenum($fleet["ship$gid"]) . " \n";
+                    $totalships += $fleet["ship$gid"];
+                }
             }
-        }
-?>
+            ?>
 "><?php echo nicenum($totalships);?></a></th>
     <th><a href="index.php?page=galaxy&galaxy=<?php echo $origin['g'];?>&system=<?php echo $origin['s'];?>&position=<?php echo $origin['p'];?>&session=<?php echo $session;?>" >[<?php echo $origin['g'];?>:<?php echo $origin['s'];?>:<?php echo $origin['p'];?>]</a></th>
 
-    <th><?php echo date ( "D M j G:i:s", $queue['start']);?></th>
+    <th><?php echo date('D M j G:i:s', $queue['start']);?></th>
     <th><a href="index.php?page=galaxy&galaxy=<?php echo $target['g'];?>&system=<?php echo $target['s'];?>&position=<?php echo $target['p'];?>&session=<?php echo $session;?>" >[<?php echo $target['g'];?>:<?php echo $target['s'];?>:<?php echo $target['p'];?>]</a><?php
-    if ( ! ($target['type'] == PTYP_COLONY_PHANTOM || $target['type'] == PTYP_FARSPACE || $target['type'] == PTYP_ABANDONED ) ) echo "   <br />" . $target_user['oname'];
-?>    </th>
-    <th><?php echo date ( "D M j G:i:s", $queue['end']);?></th>
+                if (! ($target['type'] == PTYP_COLONY_PHANTOM || $target['type'] == PTYP_FARSPACE || $target['type'] == PTYP_ABANDONED)) {
+                    echo '   <br />' . $target_user['oname'];
+                }
+            ?>    </th>
+    <th><?php echo date('D M j G:i:s', $queue['end']);?></th>
     <th>
 <?php
-    if ( ($fleet['mission'] == FTYP_ATTACK || $fleet['mission'] == FTYP_ACS_ATTACK_HEAD) && $uni['acs'] > 0 )
-    {
-?>
+                if (($fleet['mission'] == FTYP_ATTACK || $fleet['mission'] == FTYP_ACS_ATTACK_HEAD) && $uni['acs'] > 0) {
+                    ?>
          <form action="index.php?page=flotten1&session=<?php echo $session;?>" method="POST">
     <input type="hidden" name="order_union" value="<?php echo $fleet['fleet_id'];?>" />
-        <input type="submit" value="<?=loca("FLEET1_BUTTON_ACS");?>" />
+        <input type="submit" value="<?=loca('FLEET1_BUTTON_ACS');?>" />
      </form>
 <?php
-    }
-?>
+                }
+            ?>
 <?php
-    if ( $fleet['mission'] < FTYP_RETURN || $fleet['mission'] > FTYP_ORBITING )
-    {
-?>
+            if ($fleet['mission'] < FTYP_RETURN || $fleet['mission'] > FTYP_ORBITING) {
+                ?>
          <form action="index.php?page=flotten1&session=<?php echo $session;?>" method="POST">
     <input type="hidden" name="order_return" value="<?php echo $fleet['fleet_id'];?>" />
-        <input type="submit" value="<?=loca("FLEET1_BUTTON_RECALL");?>" />
+        <input type="submit" value="<?=loca('FLEET1_BUTTON_RECALL');?>" />
      </form>
 <?php
-    }
-?>
+            }
+            ?>
             </th>
    </tr>
 
 <?php
-            $row++;
+                        $row++;
         }
-    }
-    else
-    {
-?>
+    } else {
+        ?>
    <tr height="20"> 
     <th>-</th> 
     <th>-</th> 
@@ -219,42 +212,41 @@ BeginContent();
 <?php
 // ************************ ACS attack creation form ************************
 
-    if ( key_exists ( 'order_union', $_POST) && $uni['acs'] > 0 )
-    {
-        $fleet = LoadFleet ( intval ($_POST['order_union']) );
-        if ( $fleet['union_id'] ) $union = LoadUnion ( $fleet['union_id'] ); 
-        else {
-            $union = array ();
-            $union['name'] = "KV" . $fleet['fleet_id'];
-            $union["player"][] = $GlobalUser['player_id'];
+    if (key_exists('order_union', $_POST) && $uni['acs'] > 0) {
+        $fleet = LoadFleet(intval($_POST['order_union']));
+        if ($fleet['union_id']) {
+            $union = LoadUnion($fleet['union_id']);
+        } else {
+            $union = [];
+            $union['name'] = 'KV' . $fleet['fleet_id'];
+            $union['player'][] = $GlobalUser['player_id'];
         }
 
-?>
+        ?>
 
 <form action="index.php?page=flotten1&session=<?php echo $session;?>" method="POST">
     <input type="hidden" name="flotten" value="<?php echo $fleet['fleet_id'];?>" />
   <table width="519" border="0" cellpadding="0" cellspacing="1">
-                    <tr><td class="c" colspan=2><?=va(loca("FLEET1_ACS_NAME"), $union['name']);?></td></tr>
-                    <tr><td class="c" colspan=2><?=loca("FLEET1_ACS_TITLE");?></td></tr>
+                    <tr><td class="c" colspan=2><?=va(loca('FLEET1_ACS_NAME'), $union['name']);?></td></tr>
+                    <tr><td class="c" colspan=2><?=loca('FLEET1_ACS_TITLE');?></td></tr>
                     <tr><th colspan=2>
 <input name="union_name" type="text" value="<?php echo $union['name'];?>" /> <br /><input type="submit" value="OK" />
                     </th></tr>
                     <tr>
-                        <td class="c"><?=loca("FLEET1_ACS_PLAYERS");?></td>
-                        <td class="c"><?=loca("FLEET1_ACS_INVITE");?></td>
+                        <td class="c"><?=loca('FLEET1_ACS_PLAYERS');?></td>
+                        <td class="c"><?=loca('FLEET1_ACS_INVITE');?></td>
                     </tr>
                     <tr>
                         <th width="50%">
                             <select size="5">
 <?php
-    for ($i=0; $i<=$union['players']; $i++)
-    {
-        $player_id = $union["player"][$i];
-        //if ($player_id == $GlobalUser['player_id']) continue;    // keep yourself off the invitation list
-        $user = LoadUser ($player_id);
-        echo "<option>".$user['oname']."</option>\n";
-    }
-?>
+            for ($i = 0; $i <= $union['players']; $i++) {
+                $player_id = $union['player'][$i];
+                //if ($player_id == $GlobalUser['player_id']) continue;    // keep yourself off the invitation list
+                $user = LoadUser($player_id);
+                echo '<option>' . $user['oname'] . "</option>\n";
+            }
+        ?>
                             </select>
                         </th>
                         <td>
@@ -270,21 +262,33 @@ BeginContent();
   
 <form action="index.php?page=flotten2&session=<?php echo $session;?>" method="POST">
 <?php
-    if ( key_exists ( 'galaxy', $_GET ) ) {
-        $target_galaxy = intval ($_GET['galaxy']);
+    if (key_exists('galaxy', $_GET)) {
+        $target_galaxy = intval($_GET['galaxy']);
 
-        if ( key_exists ( 'system', $_GET ) ) $target_system = intval ($_GET['system']);
-        else  $target_system = 0;
+        if (key_exists('system', $_GET)) {
+            $target_system = intval($_GET['system']);
+        } else {
+            $target_system = 0;
+        }
 
-        if ( key_exists ( 'planet', $_GET ) ) $target_planet = intval ($_GET['planet']);
-        else  $target_planet = 0;
+        if (key_exists('planet', $_GET)) {
+            $target_planet = intval($_GET['planet']);
+        } else {
+            $target_planet = 0;
+        }
 
-        if ( key_exists ( 'planettype', $_GET ) ) $target_planettype = intval ($_GET['planettype']);
-        else  $target_planettype = 0;
+        if (key_exists('planettype', $_GET)) {
+            $target_planettype = intval($_GET['planettype']);
+        } else {
+            $target_planettype = 0;
+        }
 
-        if ( key_exists ( 'target_mission', $_GET ) ) $target_mission = intval ($_GET['target_mission']);
-        else  $target_mission = 0;
-?>
+        if (key_exists('target_mission', $_GET)) {
+            $target_mission = intval($_GET['target_mission']);
+        } else {
+            $target_mission = 0;
+        }
+        ?>
      <input type="hidden" name="target_galaxy" value="<?php echo $target_galaxy;?>" />
    <input type="hidden" name="target_system" value="<?php echo $target_system;?>" />
    <input type="hidden" name="target_planet" value="<?php echo $target_planet;?>" />
@@ -295,22 +299,21 @@ BeginContent();
 ?>
   <table width="519" border="0" cellpadding="0" cellspacing="1">
 <?php
-    if ($nowfleet >= $maxfleet)
-    {
-?>
+    if ($nowfleet >= $maxfleet) {
+        ?>
          <tr height="20">
-      <th colspan="4"><font color="red"><?=loca("FLEET1_ERROR_MAX");?></font></th>
+      <th colspan="4"><font color="red"><?=loca('FLEET1_ERROR_MAX');?></font></th>
    </tr>
 <?php
     }
 ?>
        <tr height="20">
-  <td colspan="4" class="c"><?=loca("FLEET1_TITLE_CHOOSE");?></td>
+  <td colspan="4" class="c"><?=loca('FLEET1_TITLE_CHOOSE');?></td>
    </tr>
    <tr height="20">
 
-  <th><?=loca("FLEET1_TYPE");?></th>
-  <th><?=loca("FLEET1_AMOUNT");?></th>
+  <th><?=loca('FLEET1_TYPE');?></th>
+  <th><?=loca('FLEET1_AMOUNT');?></th>
 <!--    <th>Gesch.</th> -->
     <th>-</th>
     <th>-</th>
@@ -318,26 +321,25 @@ BeginContent();
 
 <?php
 
-    foreach ($fleetmap as $i=>$gid) {
-        
+    foreach ($fleetmap as $i => $gid) {
+
         $amount = $aktplanet["f$gid"];
         if ($amount > 0) {
-            $speed = FleetSpeed ($gid, $GlobalUser['r'.GID_R_COMBUST_DRIVE], $GlobalUser['r'.GID_R_IMPULSE_DRIVE], $GlobalUser['r'.GID_R_HYPER_DRIVE]);
-            $cargo = FleetCargo ($gid );
-            $cons = FleetCons ( $gid, $GlobalUser['r'.GID_R_COMBUST_DRIVE], $GlobalUser['r'.GID_R_IMPULSE_DRIVE], $GlobalUser['r'.GID_R_HYPER_DRIVE]);
+            $speed = FleetSpeed($gid, $GlobalUser['r' . GID_R_COMBUST_DRIVE], $GlobalUser['r' . GID_R_IMPULSE_DRIVE], $GlobalUser['r' . GID_R_HYPER_DRIVE]);
+            $cargo = FleetCargo($gid);
+            $cons = FleetCons($gid, $GlobalUser['r' . GID_R_COMBUST_DRIVE], $GlobalUser['r' . GID_R_IMPULSE_DRIVE], $GlobalUser['r' . GID_R_HYPER_DRIVE]);
 
             echo "   <tr height=\"20\">\n";
-            echo "    <th><a title=\"".loca("FLEET1_SPEED").": $speed\">".loca("NAME_$gid")."</a></th>\n";
+            echo '    <th><a title="' . loca('FLEET1_SPEED') . ": $speed\">" . loca("NAME_$gid") . "</a></th>\n";
             echo "    <th>$amount<input type=\"hidden\" name=\"maxship$gid\" value=\"$amount\"/></th>\n";
             echo "<!--    <th>$speed -->\n";
             echo "     <input type=\"hidden\" name=\"consumption$gid\" value=\"$cons\"/>\n";
             echo "     <input type=\"hidden\" name=\"speed$gid\" value=\"$speed\" /></th>\n";
             echo "     <input type=\"hidden\" name=\"capacity$gid\" value=\"$cargo\" /></th>\n";
-            if ( $speed ) {
+            if ($speed) {
                 echo "     <th><a href=\"javascript:maxShip('ship$gid');\" >все</a> </th>\n";
-                echo "     <th><input name=\"ship$gid\" size=\"10\" value=\"0\" alt=\"".loca("NAME_$gid")." $amount\"/></th>\n";
-            }
-            else {
+                echo "     <th><input name=\"ship$gid\" size=\"10\" value=\"0\" alt=\"" . loca("NAME_$gid") . " $amount\"/></th>\n";
+            } else {
                 echo "     <th></th>\n";
                 echo "     <th></th>\n";
             }
@@ -348,40 +350,42 @@ BeginContent();
 ?>
 
    <tr height="20">
-  <th colspan="2"><a href="javascript:noShips();" ><?=loca("FLEET1_CLEAR");?></a></th>
-  <th colspan="2"><a href="javascript:maxShips();" ><?=loca("FLEET1_ALL_SHIPS");?></a></th>
+  <th colspan="2"><a href="javascript:noShips();" ><?=loca('FLEET1_CLEAR');?></a></th>
+  <th colspan="2"><a href="javascript:maxShips();" ><?=loca('FLEET1_ALL_SHIPS');?></a></th>
    </tr>
 
 <?php
-    if ( $prem['commander'] )        // Standard fleets (templates)
-    {
-        $temp_map = array ( 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 213, 214, 215 );    // without solar sat
+    if ($prem['commander']) {        // Standard fleets (templates)
+        $temp_map = [ 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 213, 214, 215 ];    // without solar sat
 
         echo "      <tr height=\"20\">\n";
-        echo "      <td colspan=\"4\" class=\"c\"><u><a href=\"index.php?page=fleet_templates&session=$session\">".loca("FLEET1_TEMPLATE")."</a></u></td>\n";
+        echo "      <td colspan=\"4\" class=\"c\"><u><a href=\"index.php?page=fleet_templates&session=$session\">" . loca('FLEET1_TEMPLATE') . "</a></u></td>\n";
         echo "      </tr>\n";
 
-        $query = "SELECT * FROM ".$db_prefix."template WHERE owner_id = ".$GlobalUser['player_id']." ORDER BY date DESC";
-        $result = dbquery ( $query );
-        $rows = dbrows ( $result );
+        $query = 'SELECT * FROM ' . $db_prefix . 'template WHERE owner_id = ' . $GlobalUser['player_id'] . ' ORDER BY date DESC';
+        $result = dbquery($query);
+        $rows = dbrows($result);
         $count = 0;
-        while ( $rows-- )
-        {
-            if ( $count == 0 ) echo "                  <tr height=\"20\" >\n";
-            $temp = dbarray ( $result );
+        while ($rows--) {
+            if ($count == 0) {
+                echo "                  <tr height=\"20\" >\n";
+            }
+            $temp = dbarray($result);
 
             echo "       <th colspan=2>\n";
-            echo "       <a href=\"javascript:setShips(";
-            foreach ( $temp_map as $i=>$gid ) {
-                if ( $i ) echo ",";
+            echo '       <a href="javascript:setShips(';
+            foreach ($temp_map as $i => $gid) {
+                if ($i) {
+                    echo ',';
+                }
                 echo $temp["ship$gid"];
             }
             echo ");\">\n";
-            echo "       ".$temp['name']."</a>\n";
+            echo '       ' . $temp['name'] . "</a>\n";
             echo "        </th>\n";
 
             $count++;
-            if ( $count == 2 ) {
+            if ($count == 2) {
                 echo "           </tr>\n";
                 $count = 0;
             }
@@ -390,7 +394,7 @@ BeginContent();
 ?>
  
    <tr height="20">
-    <th colspan="4"><input type="submit" value="<?=loca("FLEET1_NEXT");?>" /></th>
+    <th colspan="4"><input type="submit" value="<?=loca('FLEET1_NEXT');?>" /></th>
    </tr>
 <tr><th colspan=4>
 </th></tr>
@@ -398,7 +402,7 @@ BeginContent();
 </table>
 <br><br><br><br>
 <?php
-EndContent ();
-PageFooter ($FleetMessage, $FleetError);
-ob_end_flush ();
+EndContent();
+PageFooter($FleetMessage, $FleetError);
+ob_end_flush();
 ?>

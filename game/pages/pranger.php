@@ -5,44 +5,49 @@
 $limit = 50;    // Entries per page.
 
 $uni = LoadUniverse();
-$internal = key_exists ( 'session', $_GET );
+$internal = key_exists('session', $_GET);
 
 // Fixed version of the date
-function MyDate ( $fmt, $timestamp )
+function MyDate($fmt, $timestamp)
 {
-    $date = new DateTime ('@' . $timestamp);
-    return $date->format ($fmt);
+    $date = new DateTime('@' . $timestamp);
+    return $date->format($fmt);
 }
 
-if ($internal)
-{
-    loca_add ( "menu", $GlobalUser['lang'] );
-    loca_add ( "pranger", $GlobalUser['lang'] );
+if ($internal) {
+    loca_add('menu', $GlobalUser['lang']);
+    loca_add('pranger', $GlobalUser['lang']);
 
-    if ( key_exists ('cp', $_GET)) SelectPlanet ($GlobalUser['player_id'], intval($_GET['cp']));
-    $GlobalUser['aktplanet'] = GetSelectedPlanet ($GlobalUser['player_id']);
+    if (key_exists('cp', $_GET)) {
+        SelectPlanet($GlobalUser['player_id'], intval($_GET['cp']));
+    }
+    $GlobalUser['aktplanet'] = GetSelectedPlanet($GlobalUser['player_id']);
     $now = time();
-    UpdateQueue ( $now );
-    $aktplanet = GetPlanet ( $GlobalUser['aktplanet'] );
-    ProdResources ( $aktplanet, $aktplanet['lastpeek'], $now );
-    UpdatePlanetActivity ( $aktplanet['planet_id'] );
-    UpdateLastClick ( $GlobalUser['player_id'] );
+    UpdateQueue($now);
+    $aktplanet = GetPlanet($GlobalUser['aktplanet']);
+    ProdResources($aktplanet, $aktplanet['lastpeek'], $now);
+    UpdatePlanetActivity($aktplanet['planet_id']);
+    UpdateLastClick($GlobalUser['player_id']);
     $session = $_GET['session'];
 
-    PageHeader ("pranger");
+    PageHeader('pranger');
 
-    BeginContent ();
-}
-else {
+    BeginContent();
+} else {
 
     // For external reference to the Pillar of Shame, try to take the language from the cookies. If there is no language in cookies, try to take the language of the Universe.
     // Otherwise, use the default language.
 
-    if ( key_exists ( 'ogamelang', $_COOKIE ) ) $loca_lang = $_COOKIE['ogamelang'];
-    else $loca_lang = $uni['lang'];
-    if ( !key_exists ( $loca_lang, $Languages ) ) $loca_lang = $DefaultLanguage;
-    
-    loca_add ( "pranger", $loca_lang );
+    if (key_exists('ogamelang', $_COOKIE)) {
+        $loca_lang = $_COOKIE['ogamelang'];
+    } else {
+        $loca_lang = $uni['lang'];
+    }
+    if (!key_exists($loca_lang, $Languages)) {
+        $loca_lang = $DefaultLanguage;
+    }
+
+    loca_add('pranger', $loca_lang);
 }
 
 // ************************************************************************************
@@ -60,44 +65,50 @@ else {
    <body>
    <div id="overDiv" style="position:absolute; visibility:hidden; z-index:1000;"></div>
   <center>
-   <h1><?=va(loca("PRANGER_TITLE"), $uni['num']);?></h1>
-   <p><?=loca("PRANGER_INFO");?></p>
+   <h1><?=va(loca('PRANGER_TITLE'), $uni['num']);?></h1>
+   <p><?=loca('PRANGER_INFO');?></p>
 
    <table border="0" cellpadding="2" cellspacing="1">
     <tr height="20">
-     <td class="c"><?=loca("PRANGER_WHEN");?></td>
-     <td class="c"><?=loca("PRANGER_OPER");?></td>
-     <td class="c"><?=loca("PRANGER_USER");?></td>
-     <td class="c"><?=loca("PRANGER_UNTIL");?></td>
-     <td class="c"><?=loca("PRANGER_REASON");?></td>
+     <td class="c"><?=loca('PRANGER_WHEN');?></td>
+     <td class="c"><?=loca('PRANGER_OPER');?></td>
+     <td class="c"><?=loca('PRANGER_USER');?></td>
+     <td class="c"><?=loca('PRANGER_UNTIL');?></td>
+     <td class="c"><?=loca('PRANGER_REASON');?></td>
     </tr>
 
 <?php
-    $from = key_exists('from', $_GET) ? intval ( $_GET['from'] ) : 0;
-    $query = "SELECT * FROM ".$db_prefix."pranger ORDER BY ban_when DESC LIMIT $from, $limit";
-    $result = dbquery ($query);
-    $total = $rows = dbrows ( $result );
-    while ( $rows-- )
-    {
-        $entry = dbarray ( $result );
-        echo "        <tr height=\"20\">\n";
-        echo "     <th>".date("D M j Y G:i:s", $entry['ban_when'])." </th>\n\n";
-        echo "          <th>\n";
-        echo "       ".$entry['admin_name']."     </th>\n\n";
-        echo "     <th>".$entry['user_name']."</th>\n";
-        echo "     <th>".MyDate("D M j Y G:i:s", $entry['ban_until'])."</th>\n";
-        echo "     <th>".$entry['reason']."</th>\n";
-        echo "    </tr>\n";
-    }
+    $from = key_exists('from', $_GET) ? intval($_GET['from']) : 0;
+$query = 'SELECT * FROM ' . $db_prefix . "pranger ORDER BY ban_when DESC LIMIT $from, $limit";
+$result = dbquery($query);
+$total = $rows = dbrows($result);
+while ($rows--) {
+    $entry = dbarray($result);
+    echo "        <tr height=\"20\">\n";
+    echo '     <th>' . date('D M j Y G:i:s', $entry['ban_when']) . " </th>\n\n";
+    echo "          <th>\n";
+    echo '       ' . $entry['admin_name'] . "     </th>\n\n";
+    echo '     <th>' . $entry['user_name'] . "</th>\n";
+    echo '     <th>' . MyDate('D M j Y G:i:s', $entry['ban_until']) . "</th>\n";
+    echo '     <th>' . $entry['reason'] . "</th>\n";
+    echo "    </tr>\n";
+}
 
 ?>
        <tr>
    <th colspan="5">
 <?php
-    if ($internal) $pranger_url = "index.php?page=pranger&session=$session&from";
-    else $pranger_url = "pranger.php?from";
-    if ($from >= $limit) echo "     <a href=\"".$pranger_url."=".($from-$limit)."\"><< ".va(loca("PRANGER_PREV"), $limit)."</a>&nbsp;&nbsp;&nbsp;&nbsp;\n";
-    if ($total >= $limit) echo "        <a href=\"".$pranger_url."=".($from+$limit)."\">".va(loca("PRANGER_NEXT"), $limit)." >></a>\n";
+    if ($internal) {
+        $pranger_url = "index.php?page=pranger&session=$session&from";
+    } else {
+        $pranger_url = 'pranger.php?from';
+    }
+if ($from >= $limit) {
+    echo '     <a href="' . $pranger_url . '=' . ($from - $limit) . '"><< ' . va(loca('PRANGER_PREV'), $limit) . "</a>&nbsp;&nbsp;&nbsp;&nbsp;\n";
+}
+if ($total >= $limit) {
+    echo '        <a href="' . $pranger_url . '=' . ($from + $limit) . '">' . va(loca('PRANGER_NEXT'), $limit) . " >></a>\n";
+}
 ?>
       </th>
    </tr>
@@ -111,13 +122,12 @@ else {
 
 // ************************************************************************************
 
-if ($internal)
-{
+if ($internal) {
     echo "<br><br><br><br>\n";
-    EndContent ();
+    EndContent();
 
-    PageFooter ("", "");
+    PageFooter('', '');
 }
 
-ob_end_flush ();
+ob_end_flush();
 ?>
