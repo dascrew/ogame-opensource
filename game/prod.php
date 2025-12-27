@@ -301,24 +301,19 @@ function cons_fusion($lvl, $pr)
 // Check if the storage is full.
 function isStorageFull($planet, $type = null)
 {
-    $result = null;
-    if (is_array($planet) && is_string($type)) {
-        switch ($type) {
-            case 'metal':
-                $result = $planet['m'] >= $planet['mmax'];
-                break;
-            case 'crystal':
-                $result = $planet['k'] >= $planet['kmax'];
-                break;
-            case 'deuterium':
-                $result = $planet['d'] >= $planet['dmax'];
-                break;
-            default:
-                $result = false;
-                break;
-        }
+    if (!is_array($planet) || !is_string($type)) {
+        return false;
     }
-    return $result;
+    switch ($type) {
+        case 'metal':
+            return $planet['m'] >= $planet['mmax'];
+        case 'crystal':
+            return $planet['k'] >= $planet['kmax'];
+        case 'deuterium':
+            return $planet['d'] >= $planet['dmax'];
+        default:
+            return false;
+    }
 }
 
 // Calculate resource production increase. Limit storage capacity.
