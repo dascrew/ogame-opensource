@@ -72,7 +72,8 @@ function AddDBRow($row, $tabname)
         if ($row[$i] == null && $i == 0) {
             $opt .= 'NULL';
         } else {
-            $opt .= "'" . $row[$i] . "'";
+            $safe_value = mysqli_real_escape_string($db_connect, (string)$row[$i]);
+            $opt .= "'" . $safe_value . "'";
         }
     }
     $opt .= ')';

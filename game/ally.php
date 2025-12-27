@@ -53,6 +53,7 @@ function CreateAlly($owner_id, $tag, $name)
 
     // Update the founder user information.
     $joindate = time();
+    $owner_id = intval($owner_id);
     $query = 'UPDATE ' . $db_prefix . "users SET ally_id = $id, joindate = $joindate, allyrank = 0 WHERE player_id = $owner_id";
     dbquery($query);
 
@@ -63,6 +64,7 @@ function CreateAlly($owner_id, $tag, $name)
 function DismissAlly($ally_id)
 {
     global $db_prefix;
+    $ally_id = intval($ally_id);
 
     // Make the ally_id and ranks of all alliance players 0.
     $query = 'UPDATE ' . $db_prefix . "users SET ally_id = 0, joindate = 0, allyrank = 0 WHERE ally_id = $ally_id";
@@ -112,6 +114,7 @@ function EnumerateAlly($ally_id, $sort_by = 0, $order = 0, $use_sort = false)
         }
     }
 
+    $ally_id = intval($ally_id);
     $query = 'SELECT u.oname, u.ally_id, u.allyrank, u.score1, u.player_id, u.hplanetid, u.joindate, u.lastclick, u.lang, r.name, p.g, p.s, p.p ' .
              '	FROM ' . $db_prefix . 'users u ' .
              '	LEFT  JOIN ' . $db_prefix . 'allyranks r ON u.ally_id = r.ally_id AND u.allyrank = r.rank_id ' .
@@ -125,20 +128,20 @@ function EnumerateAlly($ally_id, $sort_by = 0, $order = 0, $use_sort = false)
 // Find out if there is an alliance with the specified tag.
 function IsAllyTagExist($tag)
 {
-    global $db_prefix;
-    $query = 'SELECT * FROM ' . $db_prefix . "ally WHERE tag = '" . $tag . "'";
+    global $db_prefix, $db_connect;
+    $safe_tag = mysqli_real_escape_string($db_connect, $tag);
+    $query = 'SELECT * FROM ' . $db_prefix . "ally WHERE tag = '" . $safe_tag . "'";
     $result = dbquery($query);
-    if (dbrows($result)) {
-        return true;
-    } else {
-        return false;
-    }
+    $exists = dbrows($result) ? true : false;
+    dbfree($result);
+    return $exists;
 }
 
 // Load alliance.
 function LoadAlly($ally_id)
 {
     global $db_prefix;
+    $ally_id = intval($ally_id);
     $query = 'SELECT * FROM ' . $db_prefix . "ally WHERE ally_id = $ally_id";
     $result = dbquery($query);
     return dbarray($result);
@@ -147,8 +150,9 @@ function LoadAlly($ally_id)
 // Search for alliances by tag. Returns the result of the SQL query.
 function SearchAllyTag($tag)
 {
-    global $db_prefix;
-    $query = 'SELECT * FROM ' . $db_prefix . "ally WHERE tag LIKE '%" . $tag . "%' LIMIT 30";
+    global $db_prefix, $db_connect;
+    $safe_tag = mysqli_real_escape_string($db_connect, $tag);
+    $query = 'SELECT * FROM ' . $db_prefix . "ally WHERE tag LIKE '%" . $safe_tag . "%' LIMIT 30";
     $result = dbquery($query);
     return $result;
 }
@@ -167,7 +171,8 @@ function CountAllyMembers($ally_id)
 // Change the alliance tag. Can be done once every 7 days.
 function AllyChangeTag($ally_id, $tag)
 {
-    global $db_prefix;
+    global $db_prefix, $db_connect;
+    $ally_id = intval($ally_id);
     $now = time();
     $ally = LoadAlly($ally_id);
     if ($now < $ally['tag_until']) {
@@ -177,7 +182,8 @@ function AllyChangeTag($ally_id, $tag)
         return false;
     }
     $until = $now + 7 * 24 * 60 * 60;
-    $query = 'UPDATE ' . $db_prefix . "ally SET old_tag = tag, tag = '" . $tag . "', tag_until = $until WHERE ally_id = $ally_id";
+    $safe_tag = mysqli_real_escape_string($db_connect, $tag);
+    $query = 'UPDATE ' . $db_prefix . "ally SET old_tag = tag, tag = '" . $safe_tag . "', tag_until = $until WHERE ally_id = $ally_id";
     dbquery($query);
     return true;
 }
@@ -185,7 +191,8 @@ function AllyChangeTag($ally_id, $tag)
 // Change the name of the alliance. Can be done once every 7 days.
 function AllyChangeName($ally_id, $name)
 {
-    global $db_prefix;
+    global $db_prefix, $db_connect;
+    $ally_id = intval($ally_id);
     $now = time();
     $ally = LoadAlly($ally_id);
     if ($now < $ally['name_until']) {
@@ -195,7 +202,8 @@ function AllyChangeName($ally_id, $name)
         return false;
     }
     $until = $now + 7 * 24 * 60 * 60;
-    $query = 'UPDATE ' . $db_prefix . "ally SET old_name = name, name = '" . $name . "', name_until = $until WHERE ally_id = $ally_id";
+    $safe_name = mysqli_real_escape_string($db_connect, $name);
+    $query = 'UPDATE ' . $db_prefix . "ally SET old_name = name, name = '" . $safe_name . "', name_until = $until WHERE ally_id = $ally_id";
     dbquery($query);
     return true;
 }
@@ -292,7 +300,8 @@ const ARANK_RIGHT_HAND = 0x100; // 'Right Hand' (required to transfer founder st
 // Add a rank with zero rights to an alliance. Returns the rank's ordinal number.
 function AddRank($ally_id, $name)
 {
-    global $db_prefix;
+    global $db_prefix, $db_connect;
+    $ally_id = intval($ally_id);
     if ($ally_id <= 0) {
         return 0;
     }
@@ -303,7 +312,8 @@ function AddRank($ally_id, $name)
         if ($i != 0) {
             $opt .= ', ';
         }
-        $opt .= "'" . $rank[$i] . "'";
+        $safe_entry = mysqli_real_escape_string($db_connect, (string)$rank[$i]);
+        $opt .= "'" . $safe_entry . "'";
     }
     $opt .= ')';
     $query = 'INSERT INTO ' . $db_prefix . 'allyranks VALUES' . $opt;
@@ -317,6 +327,9 @@ function AddRank($ally_id, $name)
 function SetRank($ally_id, $rank_id, $rights)
 {
     global $db_prefix;
+    $ally_id = intval($ally_id);
+    $rank_id = intval($rank_id);
+    $rights = intval($rights);
     $query = 'UPDATE ' . $db_prefix . "allyranks SET rights = $rights WHERE ally_id = $ally_id AND rank_id = $rank_id";
     dbquery($query);
 }
@@ -325,6 +338,8 @@ function SetRank($ally_id, $rank_id, $rights)
 function RemoveRank($ally_id, $rank_id)
 {
     global $db_prefix;
+    $ally_id = intval($ally_id);
+    $rank_id = intval($rank_id);
     $query = 'DELETE FROM ' . $db_prefix . "allyranks WHERE ally_id = $ally_id AND rank_id = $rank_id";
     dbquery($query);
 }
@@ -333,6 +348,7 @@ function RemoveRank($ally_id, $rank_id)
 function EnumRanks($ally_id)
 {
     global $db_prefix;
+    $ally_id = intval($ally_id);
     $query = 'SELECT * FROM ' . $db_prefix . "allyranks WHERE ally_id = $ally_id";
     return dbquery($query);
 }
@@ -341,6 +357,8 @@ function EnumRanks($ally_id)
 function SetUserRank($player_id, $rank)
 {
     global $db_prefix;
+    $player_id = intval($player_id);
+    $rank = intval($rank);
     $query = 'UPDATE ' . $db_prefix . "users SET allyrank = $rank WHERE player_id = $player_id";
     dbquery($query);
 }
@@ -349,6 +367,8 @@ function SetUserRank($player_id, $rank)
 function LoadRank($ally_id, $rank_id)
 {
     global $db_prefix;
+    $ally_id = intval($ally_id);
+    $rank_id = intval($rank_id);
     $query = 'SELECT * FROM ' . $db_prefix . "allyranks WHERE ally_id = $ally_id AND rank_id = $rank_id";
     $result = dbquery($query);
     return dbarray($result);
@@ -358,6 +378,8 @@ function LoadRank($ally_id, $rank_id)
 function LoadUsersWithRank($ally_id, $rank_id)
 {
     global $db_prefix;
+    $ally_id = intval($ally_id);
+    $rank_id = intval($rank_id);
     $query = 'SELECT * FROM ' . $db_prefix . "users WHERE ally_id = $ally_id AND allyrank = $rank_id ";
     $result = dbquery($query);
     return $result;
@@ -376,6 +398,8 @@ function LoadUsersWithRank($ally_id, $rank_id)
 // Add an application to the alliance. Returns the ordinal number of the application.
 function AddApplication($ally_id, $player_id, $text)
 {
+    $ally_id = intval($ally_id);
+    $player_id = intval($player_id);
     $app = [ null, $ally_id, $player_id, $text, time() ];
     $id = AddDBRow($app, 'allyapps');
     return $id;
@@ -385,6 +409,7 @@ function AddApplication($ally_id, $player_id, $text)
 function RemoveApplication($app_id)
 {
     global $db_prefix;
+    $app_id = intval($app_id);
     $query = 'DELETE FROM ' . $db_prefix . "allyapps WHERE app_id = $app_id";
     dbquery($query);
 }
@@ -393,6 +418,7 @@ function RemoveApplication($app_id)
 function EnumApplications($ally_id)
 {
     global $db_prefix;
+    $ally_id = intval($ally_id);
     $query = 'SELECT * FROM ' . $db_prefix . "allyapps WHERE ally_id = $ally_id";
     return dbquery($query);
 }
@@ -401,6 +427,7 @@ function EnumApplications($ally_id)
 function GetUserApplication($player_id)
 {
     global $db_prefix;
+    $player_id = intval($player_id);
     $query = 'SELECT * FROM ' . $db_prefix . "allyapps WHERE player_id = $player_id";
     $result = dbquery($query);
     if (dbrows($result) > 0) {
@@ -415,6 +442,7 @@ function GetUserApplication($player_id)
 function LoadApplication($app_id)
 {
     global $db_prefix;
+    $app_id = intval($app_id);
     $query = 'SELECT * FROM ' . $db_prefix . "allyapps WHERE app_id = $app_id";
     $result = dbquery($query);
     return dbarray($result);
@@ -434,11 +462,14 @@ function LoadApplication($app_id)
 // Returns the request ID if a request has been sent, or 0 if a buddy request has already been submitted.
 function AddBuddy($from, $to, $text)
 {
-    global $db_prefix;
+    global $db_prefix, $db_connect;
+    $from = intval($from);
+    $to = intval($to);
     $text = mb_substr($text, 0, 5000, 'UTF-8');    // Limit the length of the strings
     if ($text === '') {
         $text = 'пусто';
     }
+    $safe_text = mysqli_real_escape_string($db_connect, $text);
 
     // Check applications awaiting confirmation.
     $query = 'SELECT * FROM ' . $db_prefix . "buddy WHERE ((request_from = $from AND request_to = $to) OR (request_from = $to AND request_to = $from)) AND accepted = 0";
@@ -453,7 +484,7 @@ function AddBuddy($from, $to, $text)
     }
 
     // Add a request.
-    $buddy = [ null, $from, $to, $text, 0 ];
+    $buddy = [ null, $from, $to, $safe_text, 0 ];
     $id = AddDBRow($buddy, 'buddy');
     return $id;
 }
@@ -462,6 +493,7 @@ function AddBuddy($from, $to, $text)
 function RemoveBuddy($buddy_id)
 {
     global $db_prefix;
+    $buddy_id = intval($buddy_id);
     $query = 'DELETE FROM ' . $db_prefix . "buddy WHERE buddy_id = $buddy_id";
     dbquery($query);
 }
@@ -470,6 +502,7 @@ function RemoveBuddy($buddy_id)
 function AcceptBuddy($buddy_id)
 {
     global $db_prefix;
+    $buddy_id = intval($buddy_id);
     $query = 'UPDATE ' . $db_prefix . "buddy SET accepted = 1 WHERE buddy_id = $buddy_id";
     dbquery($query);
 }
@@ -478,6 +511,7 @@ function AcceptBuddy($buddy_id)
 function LoadBuddy($buddy_id)
 {
     global $db_prefix;
+    $buddy_id = intval($buddy_id);
     $query = 'SELECT * FROM ' . $db_prefix . "buddy WHERE buddy_id = $buddy_id";
     $result = dbquery($query);
     return dbarray($result);
@@ -487,6 +521,7 @@ function LoadBuddy($buddy_id)
 function EnumOutcomeBuddy($player_id)
 {
     global $db_prefix;
+    $player_id = intval($player_id);
     $query = 'SELECT * FROM ' . $db_prefix . "buddy WHERE request_from = $player_id AND accepted = 0";
     return dbquery($query);
 }
@@ -495,6 +530,7 @@ function EnumOutcomeBuddy($player_id)
 function EnumIncomeBuddy($player_id)
 {
     global $db_prefix;
+    $player_id = intval($player_id);
     $query = 'SELECT * FROM ' . $db_prefix . "buddy WHERE request_to = $player_id AND accepted = 0";
     return dbquery($query);
 }
@@ -503,6 +539,7 @@ function EnumIncomeBuddy($player_id)
 function EnumBuddy($player_id)
 {
     global $db_prefix;
+    $player_id = intval($player_id);
     $query = 'SELECT * FROM ' . $db_prefix . "buddy WHERE (request_from = $player_id OR request_to = $player_id) AND accepted = 1";
     return dbquery($query);
 }
@@ -511,6 +548,8 @@ function EnumBuddy($player_id)
 function IsBuddy($player1, $player2)
 {
     global $db_prefix;
+    $player1 = intval($player1);
+    $player2 = intval($player2);
     $query = 'SELECT * FROM ' . $db_prefix . "buddy WHERE ((request_from = $player1 AND request_to = $player2) OR (request_from = $player2 AND request_to = $player1)) AND accepted = 1";
     $result = dbquery($query);
     if (dbrows($result)) {

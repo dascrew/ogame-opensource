@@ -47,8 +47,15 @@ function SetExtLinks($ext_board, $ext_discord, $ext_tutorial, $ext_rules, $ext_i
     global $db_prefix;
     global $GlobalUni;
 
-    $query = 'UPDATE ' . $db_prefix . "uni SET ext_board='" . $ext_board . "', ext_discord='" . $ext_discord . "', ext_tutorial='" . $ext_tutorial . "', ext_rules='" . $ext_rules . "', ext_impressum='" . $ext_impressum . "'";
-    dbquery($query);
+
+    global $db_connect;
+    $query = 'UPDATE ' . $db_prefix . 'uni SET ext_board=?, ext_discord=?, ext_tutorial=?, ext_rules=?, ext_impressum=?';
+    $stmt = mysqli_prepare($db_connect, $query);
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, 'sssss', $ext_board, $ext_discord, $ext_tutorial, $ext_rules, $ext_impressum);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    }
 
     $GlobalUni = LoadUniverse();
 }
