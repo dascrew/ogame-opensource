@@ -470,7 +470,6 @@ function AddBuddy($from, $to, $text)
     if ($text === '') {
         $text = 'пусто';
     }
-    $safe_text = mysqli_real_escape_string($db_connect, $text);
 
     // Check applications awaiting confirmation.
     $query = 'SELECT * FROM ' . $db_prefix . "buddy WHERE ((request_from = $from AND request_to = $to) OR (request_from = $to AND request_to = $from)) AND accepted = 0";
@@ -485,7 +484,7 @@ function AddBuddy($from, $to, $text)
     }
 
     // Add a request.
-    $buddy = [ null, $from, $to, $safe_text, 0 ];
+    $buddy = [ null, $from, $to, $text, 0 ];
     $id = AddDBRow($buddy, 'buddy');
     return $id;
 }
