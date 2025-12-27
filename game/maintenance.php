@@ -1,31 +1,33 @@
 <?php
 
-require_once "config.php";
-require_once "db.php";
-require_once "utils.php";
-require_once "loca.php";
-require_once "uni.php";
+require_once 'config.php';
+require_once 'db.php';
+require_once 'utils.php';
+require_once 'loca.php';
+require_once 'uni.php';
 
 InitDB();
 
-$GlobalUni = LoadUniverse ();
+$GlobalUni = LoadUniverse();
 
 $loca_lang = $GlobalUni['lang'];
-if ( !key_exists ( $loca_lang, $Languages ) ) $loca_lang = $DefaultLanguage;
+if (!key_exists($loca_lang, $Languages)) {
+    $loca_lang = $DefaultLanguage;
+}
 
-loca_add ( "maintain", $loca_lang );
+loca_add('maintain', $loca_lang);
 
-if ( !$GlobalUni['freeze'] ) {
+if (!$GlobalUni['freeze']) {
     echo "<html><head><meta http-equiv='refresh' content='0;url=$StartPage' /></head><body></body>";
-    ob_end_flush ();
-    die ();
+    ob_end_flush();
+    die();
 }
 
 ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<title><?=loca("MAINTAIN_TITLE");?></title>
+	<title><?=loca('MAINTAIN_TITLE');?></title>
     <style type="text/css" >
         <!--
 html, body, div, span, applet, object, iframe,
@@ -90,16 +92,16 @@ a:hover {
 
 <body id="maintenance">
     <div id="infowrapper">
-        <h2><?=loca("MAINTAIN_HEAD");?></h2>
-        <p><?=loca("MAINTAIN_INFO1");?></p>
-        <p><?=loca("MAINTAIN_INFO2");?></p>
+        <h2><?=loca('MAINTAIN_HEAD');?></h2>
+        <p><?=loca('MAINTAIN_INFO1');?></p>
+        <p><?=loca('MAINTAIN_INFO2');?></p>
         <br/>
         <br/>
         <br/>
         <p>
 <?php
     if (!empty($GlobalUni['ext_board'])) {
-        echo va(loca("MAINTAIN_BOARDLINK"), $GlobalUni['ext_board'] );
+        echo va(loca('MAINTAIN_BOARDLINK'), $GlobalUni['ext_board']);
     }
 ?>
         </p>

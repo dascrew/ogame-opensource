@@ -65,46 +65,70 @@ const GID_D_LDOME = 408;    // Large Shield Dome
 const GID_D_ABM = 502;      // Anti-Ballistic Missiles
 const GID_D_IPM = 503;      // Interplanetary Missiles
 
-function IsBuilding ($gid)
+// Arrays of objects that are very commonly used elsewhere.
+
+$buildmap = [
+    GID_B_METAL_MINE, GID_B_CRYS_MINE, GID_B_DEUT_SYNTH, GID_B_SOLAR, GID_B_FUSION, GID_B_ROBOTS, GID_B_NANITES, GID_B_SHIPYARD,
+    GID_B_METAL_STOR, GID_B_CRYS_STOR, GID_B_DEUT_STOR, GID_B_RES_LAB, GID_B_TERRAFORMER, GID_B_ALLY_DEPOT, GID_B_LUNAR_BASE, GID_B_PHALANX, GID_B_JUMP_GATE, GID_B_MISS_SILO
+];
+$resmap = [
+    GID_R_ESPIONAGE, GID_R_COMPUTER, GID_R_WEAPON, GID_R_SHIELD, GID_R_ARMOUR, GID_R_ENERGY, GID_R_HYPERSPACE, GID_R_COMBUST_DRIVE,
+    GID_R_IMPULSE_DRIVE, GID_R_HYPER_DRIVE, GID_R_LASER_TECH, GID_R_ION_TECH, GID_R_PLASMA_TECH, GID_R_IGN, GID_R_EXPEDITION, GID_R_GRAVITON
+];
+$fleetmap = [
+    GID_F_SC, GID_F_LC, GID_F_LF, GID_F_HF, GID_F_CRUISER, GID_F_BATTLESHIP, GID_F_COLON, GID_F_RECYCLER, GID_F_PROBE, GID_F_BOMBER, GID_F_SAT, GID_F_DESTRO, GID_F_DEATHSTAR, GID_F_BATTLECRUISER
+];
+$fleetmap_nosat = [
+    GID_F_SC, GID_F_LC, GID_F_LF, GID_F_HF, GID_F_CRUISER, GID_F_BATTLESHIP, GID_F_COLON, GID_F_RECYCLER, GID_F_PROBE, GID_F_BOMBER, GID_F_DESTRO, GID_F_DEATHSTAR, GID_F_BATTLECRUISER
+];    // without a solar satellite  (flottenversand)
+$fleetmap_revnosat = [
+    GID_F_BATTLECRUISER, GID_F_DEATHSTAR, GID_F_DESTRO, GID_F_BOMBER, GID_F_PROBE, GID_F_RECYCLER, GID_F_COLON, GID_F_BATTLESHIP, GID_F_CRUISER, GID_F_HF, GID_F_LF, GID_F_LC, GID_F_SC
+];     // reverse order, without a solar satellite   (JumpGate)
+$defmap = [
+    GID_D_RL, GID_D_LL, GID_D_HL, GID_D_GAUSS, GID_D_ION, GID_D_PLASMA, GID_D_SDOME, GID_D_LDOME, GID_D_ABM, GID_D_IPM
+];
+$defmap_norak = [
+    GID_D_RL, GID_D_LL, GID_D_HL, GID_D_GAUSS, GID_D_ION, GID_D_PLASMA, GID_D_SDOME, GID_D_LDOME
+];           // without missiles
+$defmap_shoot = [
+    GID_D_RL, GID_D_LL, GID_D_HL, GID_D_GAUSS, GID_D_ION, GID_D_PLASMA
+];        // shooting defenses only
+
+
+function isBuilding($gid)
 {
-    return $gid >= GID_B_METAL_MINE && $gid <= GID_B_MISS_SILO;
+    global $buildmap;
+    return in_array($gid, $buildmap, true);
 }
 
-function IsResearch ($gid)
+function isResearch($gid)
 {
-    return $gid >= GID_R_ESPIONAGE && $gid <= GID_R_GRAVITON;
+    global $resmap;
+    return in_array($gid, $resmap, true);
 }
 
-function IsFleet ($gid)
+function isFleet($gid)
 {
-    return $gid >= GID_F_SC && $gid <= GID_F_BATTLECRUISER;
+    global $fleetmap;
+    return in_array($gid, $fleetmap, true);
 }
 
-function IsDefense ($gid)
+function isDefense($gid)
 {
-    return $gid >= GID_D_RL && $gid <= GID_D_IPM;
+    global $defmap;
+    return in_array($gid, $defmap, true);
 }
 
 // Defense, but no missiles
-function IsDefenseNoRak ($gid)
+function isDefenseNoRak($gid)
 {
-    return $gid >= GID_D_RL && $gid <= GID_D_LDOME;
+    global $defmap_norak;
+    return in_array($gid, $defmap_norak, true);
 }
 
 // Shooting defenses
-function IsDefenseShoot ($gid)
+function isDefenseShoot($gid)
 {
-    return $gid >= GID_D_RL && $gid <= GID_D_PLASMA;
+    global $defmap_shoot;
+    return in_array($gid, $defmap_shoot, true);
 }
-
-// Arrays of objects that are very commonly used elsewhere.
-
-$buildmap = array ( 1, 2, 3, 4, 12, 14, 15, 21, 22, 23, 24, 31, 33, 34, 41, 42, 43, 44 );
-$resmap = array ( 106, 108, 109, 110, 111, 113, 114, 115, 117, 118, 120, 121, 122, 123, 124, 199 );
-$fleetmap = array ( 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215 );
-$fleetmap_nosat = array ( 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 213, 214, 215 );    // without a solar satellite  (flottenversand)
-$fleetmap_revnosat = array ( 215, 214, 213, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202 );     // reverse order, without a solar satellite   (JumpGate)
-$defmap = array ( 401, 402, 403, 404, 405, 406, 407, 408, 502, 503 );
-$defmap_norak = array ( 401, 402, 403, 404, 405, 406, 407, 408 );           // without missiles
-
-?>

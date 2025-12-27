@@ -7,27 +7,29 @@
 // ABM - anti-ballistic missile, defends
 
 // Algorithmic part of the missile attack (without working with DB).
-function RocketAttackMain ( $amount, $primary, $moon_attack, &$target, &$moon_planet, $origin_user_attack, $target_user_armor )
+function RocketAttackMain($amount, $primary, $moon_attack, &$target, &$moon_planet, $origin_user_attack, $target_user_armor)
 {
     global $UnitParam;
 
     // Repel IPM attack by interceptors (ABMs)
     $ipm = $amount;
-    $abm = $moon_attack ? $moon_planet['d'.GID_D_ABM] : $target['d'.GID_D_ABM];
-    $ipm = max (0, $ipm - $abm);
+    $abm = $moon_attack ? $moon_planet['d' . GID_D_ABM] : $target['d' . GID_D_ABM];
+    $ipm = max(0, $ipm - $abm);
     $ipm_destroyed = $amount - $ipm;
-    if ($moon_attack) $moon_planet['d'.GID_D_ABM] -= $ipm_destroyed;
-    else $target['d'.GID_D_ABM] -= $ipm_destroyed;
+    if ($moon_attack) {
+        $moon_planet['d' . GID_D_ABM] -= $ipm_destroyed;
+    } else {
+        $target['d' . GID_D_ABM] -= $ipm_destroyed;
+    }
 
     $maxdamage = $ipm * $UnitParam[503][2] * (1 + $origin_user_attack / 10);
 
     // Launch an attack on the primary target
-    if ( $primary > 0 && $ipm > 0 )
-    {
+    if ($primary > 0 && $ipm > 0) {
         $armor = $UnitParam[$primary][0] * (1 + 0.1 * $target_user_armor) / 10;
         $count = $target["d$primary"];
         if ($count != 0) {
-            $destroyed = min ( floor ( $maxdamage / $armor ), $count );
+            $destroyed = min(floor($maxdamage / $armor), $count);
             $target["d$primary"] -= $destroyed;
             $maxdamage -= $destroyed * $armor;
             $maxdamage -= $destroyed;
@@ -35,21 +37,23 @@ function RocketAttackMain ( $amount, $primary, $moon_attack, &$target, &$moon_pl
     }
 
     // Calculate defense losses, if there are still IPMs left -- all the same, but ignore the ID of the primary target in the ID. Foreign missiles can also be bombed.
-    if ($maxdamage > 0)
-    {
+    if ($maxdamage > 0) {
         global $defmap;
-        foreach ($defmap as $i=>$id)
-        {
-            if ($id == $primary) continue;
+        foreach ($defmap as $i => $id) {
+            if ($id == $primary) {
+                continue;
+            }
             $armor = $UnitParam[$id][0] * (1 + 0.1 * $target_user_armor) / 10;
             $count = $target["d$id"];
             if ($count != 0) {
-                $destroyed = min ( floor ( $maxdamage / $armor ), $count );
+                $destroyed = min(floor($maxdamage / $armor), $count);
                 $target["d$id"] -= $destroyed;
                 $maxdamage -= $destroyed * $armor;
                 $maxdamage -= $destroyed;
             }
-            if ($maxdamage <= 0) break;
+            if ($maxdamage <= 0) {
+                break;
+            }
         }
     }
 
@@ -57,53 +61,60 @@ function RocketAttackMain ( $amount, $primary, $moon_attack, &$target, &$moon_pl
 }
 
 // Missile attack.
-function RocketAttack ( $fleet_id, $planet_id, $when )
+function RocketAttack($fleet_id, $planet_id, $when)
 {
-    $fleet = LoadFleet ($fleet_id);
+    $fleet = LoadFleet($fleet_id);
     $amount = $fleet['ipm_amount'];
     $primary = $fleet['ipm_target'];
-    $origin = GetPlanet ($fleet['start_planet']);
-    $target = GetPlanet ($planet_id);
+    $origin = GetPlanet($fleet['start_planet']);
+    $target = GetPlanet($planet_id);
     $moon_attack = $target['type'] == 0;
     if ($moon_attack) {
         // If a missile attack is made on the Moon, interceptors from the planet are involved in defense
-        $moon_planet = LoadPlanet ($target['g'], $target['s'], $target['p'], 1);
+        $moon_planet = LoadPlanet($target['g'], $target['s'], $target['p'], 1);
     }
-    $origin_user = LoadUser ($origin['owner_id']);
-    $target_user = LoadUser ($target['owner_id']);
+    $origin_user = LoadUser($origin['owner_id']);
+    $target_user = LoadUser($target['owner_id']);
 
-    $ipm_destroyed = RocketAttackMain (
-        $amount, 
-        $primary, 
-        $moon_attack, 
-        $target, 
-        $moon_planet, 
-        $origin_user['r'.GID_R_WEAPON], 
-        $target_user['r'.GID_R_ARMOUR] );
+    $ipm_destroyed = RocketAttackMain(
+        $amount,
+        $primary,
+        $moon_attack,
+        $target,
+        $moon_planet,
+        $origin_user['r' . GID_R_WEAPON],
+        $target_user['r' . GID_R_ARMOUR]
+    );
 
     // Write back the defense's losses.
-    SetPlanetDefense ( $planet_id, $target );
+    SetPlanetDefense($planet_id, $target);
     if ($moon_attack) {
-        SetPlanetDefense ( $moon_planet['planet_id'], $moon_planet );
+        SetPlanetDefense($moon_planet['planet_id'], $moon_planet);
     }
 
     // Modify player statistics
-    RecalcRanks ();
+    RecalcRanks();
 
     // Update the activity on the planet.
-    UpdatePlanetActivity ( $planet_id, $when );
+    UpdatePlanetActivity($planet_id, $when);
 
     // Generate a message for the defender
-    loca_add ( "raketen", $target_user['lang'] );
-    loca_add ( "fleetmsg", $target_user['lang'] );
-    $text = va(loca_lang("RAK_DEF_TEXT1", $target_user['lang']), $amount) . " ". $origin['name']." <a href=# onclick=showGalaxy(".$origin['g'].",".$origin['s'].",".$origin['p']."); >[".$origin['g'].":".$origin['s'].":".$origin['p']."]</a>  ";
-    $text .= loca_lang ("RAK_DEF_TEXT2", $target_user['lang']) . " " . $target['name']." <a href=# onclick=showGalaxy(".$target['g'].",".$target['s'].",".$target['p']."); >[".$target['g'].":".$target['s'].":".$target['p']."]</a> !<br>";
-    if ($ipm_destroyed) $text .= va(loca_lang("RAK_DEF_TEXT3", $target_user['lang']), $ipm_destroyed) . "<br>:<br>";
-    $text .= GetDestroyedDefenseText ($target_user['lang'], $target, $moon_planet, $moon_attack);
-    SendMessage ( $target_user['player_id'], 
-        loca_lang ("FLEET_MESSAGE_FROM", $target_user['lang']), 
-        loca_lang ("RAK_MSG_SUBJ", $target_user['lang']), 
-        $text, MTYP_BATTLE_REPORT_LINK, $when);
+    loca_add('raketen', $target_user['lang']);
+    loca_add('fleetmsg', $target_user['lang']);
+    $text = va(loca_lang('RAK_DEF_TEXT1', $target_user['lang']), $amount) . ' ' . $origin['name'] . ' <a href=# onclick=showGalaxy(' . $origin['g'] . ',' . $origin['s'] . ',' . $origin['p'] . '); >[' . $origin['g'] . ':' . $origin['s'] . ':' . $origin['p'] . ']</a>  ';
+    $text .= loca_lang('RAK_DEF_TEXT2', $target_user['lang']) . ' ' . $target['name'] . ' <a href=# onclick=showGalaxy(' . $target['g'] . ',' . $target['s'] . ',' . $target['p'] . '); >[' . $target['g'] . ':' . $target['s'] . ':' . $target['p'] . ']</a> !<br>';
+    if ($ipm_destroyed) {
+        $text .= va(loca_lang('RAK_DEF_TEXT3', $target_user['lang']), $ipm_destroyed) . '<br>:<br>';
+    }
+    $text .= GetDestroyedDefenseText($target_user['lang'], $target, $moon_planet, $moon_attack);
+    SendMessage(
+        $target_user['player_id'],
+        loca_lang('FLEET_MESSAGE_FROM', $target_user['lang']),
+        loca_lang('RAK_MSG_SUBJ', $target_user['lang']),
+        $text,
+        MTYP_BATTLE_REPORT_LINK,
+        $when
+    );
 
     $message_for_attacker = true;
 
@@ -111,40 +122,45 @@ function RocketAttack ( $fleet_id, $planet_id, $when )
     // The original 0.84 version did not create a message for the attacker.
     if ($message_for_attacker) {
 
-        loca_add ( "raketen", $origin_user['lang'] );
-        loca_add ( "fleetmsg", $origin_user['lang'] );
-        $text = va(loca_lang("RAK_ATT_TEXT1", $origin_user['lang']), $amount) . " " . $origin['name']." <a href=# onclick=showGalaxy(".$origin['g'].",".$origin['s'].",".$origin['p']."); >[".$origin['g'].":".$origin['s'].":".$origin['p']."]</a> ";
-        $text .= loca_lang("RAK_ATT_TEXT2", $origin_user['lang']) . " " . $target['name']." <a href=# onclick=showGalaxy(".$target['g'].",".$target['s'].",".$target['p']."); >[".$target['g'].":".$target['s'].":".$target['p']."]</a> !<br>";    
-        $text .= GetDestroyedDefenseText ($origin_user['lang'], $target, $moon_planet, $moon_attack);
-        SendMessage ( $origin_user['player_id'], 
-            loca_lang ("FLEET_MESSAGE_FROM", $origin_user['lang']), 
-            loca_lang ("RAK_MSG_SUBJ", $origin_user['lang']), 
-            $text, MTYP_BATTLE_REPORT_LINK, $when);
+        loca_add('raketen', $origin_user['lang']);
+        loca_add('fleetmsg', $origin_user['lang']);
+        $text = va(loca_lang('RAK_ATT_TEXT1', $origin_user['lang']), $amount) . ' ' . $origin['name'] . ' <a href=# onclick=showGalaxy(' . $origin['g'] . ',' . $origin['s'] . ',' . $origin['p'] . '); >[' . $origin['g'] . ':' . $origin['s'] . ':' . $origin['p'] . ']</a> ';
+        $text .= loca_lang('RAK_ATT_TEXT2', $origin_user['lang']) . ' ' . $target['name'] . ' <a href=# onclick=showGalaxy(' . $target['g'] . ',' . $target['s'] . ',' . $target['p'] . '); >[' . $target['g'] . ':' . $target['s'] . ':' . $target['p'] . ']</a> !<br>';
+        $text .= GetDestroyedDefenseText($origin_user['lang'], $target, $moon_planet, $moon_attack);
+        SendMessage(
+            $origin_user['player_id'],
+            loca_lang('FLEET_MESSAGE_FROM', $origin_user['lang']),
+            loca_lang('RAK_MSG_SUBJ', $origin_user['lang']),
+            $text,
+            MTYP_BATTLE_REPORT_LINK,
+            $when
+        );
     }
 }
 
 // Get the text for the destroyed defense
-function GetDestroyedDefenseText ($lang, &$target, &$moon_planet, $moon_attack)
+function GetDestroyedDefenseText($lang, &$target, &$moon_planet, $moon_attack)
 {
-    loca_add ( "raketen", $lang );
-    loca_add ( "technames", $lang );
+    loca_add('raketen', $lang);
+    loca_add('technames', $lang);
 
     global $defmap;
-    $defmap_rev = array_reverse ($defmap);         // the defenses are being pulled backwards for some unknown reason.
-    $deftext = "<table width=400><tr><td class=c colspan=4>".loca_lang("RAK_TITLE", $lang)."</td></tr>";
+    $defmap_rev = array_reverse($defmap);         // the defenses are being pulled backwards for some unknown reason.
+    $deftext = '<table width=400><tr><td class=c colspan=4>' . loca_lang('RAK_TITLE', $lang) . '</td></tr>';
     $n = 0;
-    foreach ( $defmap_rev as $i=>$gid )
-    {
-        if ( ($n % 2) == 0 ) $deftext .= "</tr>";
-        if ( $target["d$gid"] ) {
+    foreach ($defmap_rev as $i => $gid) {
+        if (($n % 2) == 0) {
+            $deftext .= '</tr>';
+        }
+        if ($target["d$gid"]) {
 
             $count = $target["d$gid"];
             // Consider the defense of the moon by interceptors from the planet.
-            if ($moon_attack && $gid == GID_D_ABM ) {
-                $count = $moon_planet["d".GID_D_ABM];
+            if ($moon_attack && $gid == GID_D_ABM) {
+                $count = $moon_planet['d' . GID_D_ABM];
             }
 
-            $deftext .= "<td>".loca_lang("NAME_$gid", $lang)."</td><td>".nicenum($count)."</td>";
+            $deftext .= '<td>' . loca_lang("NAME_$gid", $lang) . '</td><td>' . nicenum($count) . '</td>';
             $n++;
         }
     }
@@ -152,5 +168,3 @@ function GetDestroyedDefenseText ($lang, &$target, &$moon_planet, $moon_attack)
 
     return $deftext;
 }
-
-?>

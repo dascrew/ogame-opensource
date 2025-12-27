@@ -7,53 +7,56 @@
  *                                                                            *
  ******************************************************************************/
 
-class bbcode {
-	/* Описания свойств и методов смотрите в документации. */
-    var $tag = '';
-    var $attrib = array();
-    var $text = '';
-    var $syntax = array();
-    var $tree = array();
-    var $tags = array(
-        'align'   => 'bb_align',
-        'b'       => 'bb_strong',
-        'color'   => 'bb_color',
-        'email'   => 'bb_email',
-        'font'    => 'bb_font',
-        'hr'      => 'bb_hr',
-        'i'       => 'bb_i',
-        'img'     => 'bb_img',
-        'quote'   => 'bb_quote',
-        's'       => 'bb_del',
-        'size'    => 'bb_size',
-        'sub'     => 'bb_sub',
-        'sup'     => 'bb_sup',
-        'u'       => 'bb_u',
-        'url'     => 'bb_a'
-    );
-    var $children = array(
-        'align','b','color','email','font','hr','i','img',
-        'quote','s','size','sub','sup','u','url'
-    );
-    var $mnemonics = array();
-    var $autolinks = true;
-    var $is_close = false;
-    var $lbr = 0;
-    var $rbr = 0;
+class bbcode
+{
+    /* Описания свойств и методов смотрите в документации. */
+    public $tag = '';
+    public $attrib = [];
+    public $text = '';
+    public $syntax = [];
+    public $tree = [];
+    public $tags = [
+        'align' => 'bb_align',
+        'b' => 'bb_strong',
+        'color' => 'bb_color',
+        'email' => 'bb_email',
+        'font' => 'bb_font',
+        'hr' => 'bb_hr',
+        'i' => 'bb_i',
+        'img' => 'bb_img',
+        'quote' => 'bb_quote',
+        's' => 'bb_del',
+        'size' => 'bb_size',
+        'sub' => 'bb_sub',
+        'sup' => 'bb_sup',
+        'u' => 'bb_u',
+        'url' => 'bb_a'
+    ];
+    public $children = [
+        'align', 'b', 'color', 'email', 'font', 'hr', 'i', 'img',
+        'quote', 's', 'size', 'sub', 'sup', 'u', 'url'
+    ];
+    public $mnemonics = [];
+    public $autolinks = true;
+    public $is_close = false;
+    public $lbr = 0;
+    public $rbr = 0;
 
-    function __construct($code = '') {
-        $this -> do_bbcode ($code);
+    public function __construct($code = '')
+    {
+        $this -> do_bbcode($code);
     }
 
-    function do_bbcode($code = '') {
+    public function do_bbcode($code = '')
+    {
         if (is_array($code)) {
             $is_tree = false;
             foreach ($code as $key => $val) {
                 if (isset($val['val'])) {
-                	$this -> tree = $code;
-                	$this -> syntax = $this -> get_syntax();
-                	$is_tree = true;
-                	break;
+                    $this -> tree = $code;
+                    $this -> syntax = $this -> get_syntax();
+                    $is_tree = true;
+                    break;
                 }
             }
             if (! $is_tree) {
@@ -65,17 +68,18 @@ class bbcode {
                 $this -> text .= $val['str'];
             }
         } elseif ($code) {
-        	$this -> text = $code;
-        	$this -> parse();
+            $this -> text = $code;
+            $this -> parse();
         }
     }
 
-    function get_tokens() {
+    public function get_tokens()
+    {
         $length = strlen($this -> text);
-        $tokens = array();
+        $tokens = [];
         $token_key = -1;
         $type_of_char = null;
-        for ($i=0; $i < $length; ++$i) {
+        for ($i = 0; $i < $length; ++$i) {
             $previous_type = $type_of_char;
             switch ($this -> text[$i]) {
                 case '[':
@@ -90,7 +94,7 @@ class bbcode {
                 case "'":
                     $type_of_char = 3;
                     break;
-                case "=":
+                case '=':
                     $type_of_char = 4;
                     break;
                 case '/':
@@ -128,26 +132,27 @@ class bbcode {
                     if (6 == $previous_type) {
                         $tokens[$token_key][1] .= $this -> text[$i];
                     } else {
-                    	$tokens[++$token_key] = array(6, $this -> text[$i]);
+                        $tokens[++$token_key] = [6, $this -> text[$i]];
                     }
                     break;
                 case 7:
                     if (7 == $previous_type) {
                         $tokens[$token_key][1] .= $this -> text[$i];
                     } else {
-                    	$tokens[++$token_key] = array(7, $this -> text[$i]);
+                        $tokens[++$token_key] = [7, $this -> text[$i]];
                     }
                     break;
                 default:
-                    $tokens[++$token_key] = array(
+                    $tokens[++$token_key] = [
                         $type_of_char, $this -> text[$i]
-                    );
+                    ];
             }
         }
         return $tokens;
     }
 
-    function parse($code = '') {
+    public function parse($code = '')
+    {
         if ($code) {
             $this -> do_bbcode($code);
             return;
@@ -194,35 +199,35 @@ class bbcode {
 
         Описание конечного автомата:
         */
-        $finite_automaton = array(
+        $finite_automaton = [
                // Предыдущие |   Состояния для текущих событий (лексем)   |
                //  состояния |  0 |  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |
-                   0 => array(  1 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 )
-                ,  1 => array(  2 ,  3 ,  3 ,  3 ,  3 ,  4 ,  3 ,  3 ,  5 )
-                ,  2 => array(  2 ,  3 ,  3 ,  3 ,  3 ,  4 ,  3 ,  3 ,  5 )
-                ,  3 => array(  1 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 )
-                ,  4 => array(  2 ,  6 ,  3 ,  3 ,  3 ,  3 ,  3 ,  3 ,  7 )
-                ,  5 => array(  2 ,  6 ,  3 ,  3 ,  8 ,  9 , 10 ,  3 ,  3 )
-                ,  6 => array(  1 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 )
-                ,  7 => array(  2 ,  6 ,  3 ,  3 ,  3 ,  3 ,  3 ,  3 ,  3 )
-                ,  8 => array( 13 , 13 , 11 , 12 , 13 , 13 , 14 , 13 , 13 )
-                ,  9 => array(  2 ,  6 ,  3 ,  3 ,  3 ,  3 ,  3 ,  3 ,  3 )
-                , 10 => array(  2 ,  6 ,  3 ,  3 ,  8 ,  9 ,  3 , 15 , 15 )
-                , 11 => array( 16 , 16 , 17 , 16 , 16 , 16 , 16 , 16 , 16 )
-                , 12 => array( 18 , 18 , 18 , 17 , 18 , 18 , 18 , 18 , 18 )
-                , 13 => array( 19 ,  6 , 19 , 19 , 19 , 19 , 17 , 19 , 19 )
-                , 14 => array(  2 ,  3 , 11 , 12 , 13 , 13 ,  3 , 13 , 13 )
-                , 15 => array(  2 ,  6 ,  3 ,  3 ,  8 ,  9 , 10 ,  3 ,  3 )
-                , 16 => array( 16 , 16 , 17 , 16 , 16 , 16 , 16 , 16 , 16 )
-                , 17 => array(  2 ,  6 ,  3 ,  3 ,  3 ,  9 , 20 , 15 , 15 )
-                , 18 => array( 18 , 18 , 18 , 17 , 18 , 18 , 18 , 18 , 18 )
-                , 19 => array( 19 ,  6 , 19 , 19 , 19 , 19 , 20 , 19 , 19 )
-                , 20 => array(  2 ,  6 ,  3 ,  3 ,  3 ,  9 ,  3 , 15 , 15 )
-            );
+                   0 => [  1 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ]
+                ,  1 => [  2 ,  3 ,  3 ,  3 ,  3 ,  4 ,  3 ,  3 ,  5 ]
+                ,  2 => [  2 ,  3 ,  3 ,  3 ,  3 ,  4 ,  3 ,  3 ,  5 ]
+                ,  3 => [  1 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ]
+                ,  4 => [  2 ,  6 ,  3 ,  3 ,  3 ,  3 ,  3 ,  3 ,  7 ]
+                ,  5 => [  2 ,  6 ,  3 ,  3 ,  8 ,  9 , 10 ,  3 ,  3 ]
+                ,  6 => [  1 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ]
+                ,  7 => [  2 ,  6 ,  3 ,  3 ,  3 ,  3 ,  3 ,  3 ,  3 ]
+                ,  8 => [ 13 , 13 , 11 , 12 , 13 , 13 , 14 , 13 , 13 ]
+                ,  9 => [  2 ,  6 ,  3 ,  3 ,  3 ,  3 ,  3 ,  3 ,  3 ]
+                , 10 => [  2 ,  6 ,  3 ,  3 ,  8 ,  9 ,  3 , 15 , 15 ]
+                , 11 => [ 16 , 16 , 17 , 16 , 16 , 16 , 16 , 16 , 16 ]
+                , 12 => [ 18 , 18 , 18 , 17 , 18 , 18 , 18 , 18 , 18 ]
+                , 13 => [ 19 ,  6 , 19 , 19 , 19 , 19 , 17 , 19 , 19 ]
+                , 14 => [  2 ,  3 , 11 , 12 , 13 , 13 ,  3 , 13 , 13 ]
+                , 15 => [  2 ,  6 ,  3 ,  3 ,  8 ,  9 , 10 ,  3 ,  3 ]
+                , 16 => [ 16 , 16 , 17 , 16 , 16 , 16 , 16 , 16 , 16 ]
+                , 17 => [  2 ,  6 ,  3 ,  3 ,  3 ,  9 , 20 , 15 , 15 ]
+                , 18 => [ 18 , 18 , 18 , 17 , 18 , 18 , 18 , 18 , 18 ]
+                , 19 => [ 19 ,  6 , 19 , 19 , 19 , 19 , 20 , 19 , 19 ]
+                , 20 => [  2 ,  6 ,  3 ,  3 ,  3 ,  9 ,  3 , 15 , 15 ]
+            ];
         // Закончили описание конечного автомата
         $mode = 0;
-        $result = array();
-        $tag_decomposition = array();
+        $result = [];
+        $tag_decomposition = [];
         $token_key = -1;
         $value = '';
         // Сканируем массив лексем с помощью построенного автомата:
@@ -231,59 +236,59 @@ class bbcode {
             $mode = $finite_automaton[$previous_mode][$token[0]];
             switch ($mode) {
                 case 0:
-                    if (-1 < $token_key && 'text'==$result[$token_key]['type']) {
+                    if (-1 < $token_key && 'text' == $result[$token_key]['type']) {
                         $result[$token_key]['str'] .= $token[1];
                     } else {
-                        $result[++$token_key] = array(
+                        $result[++$token_key] = [
                                 'type' => 'text',
                                 'str' => $token[1]
-                            );
+                            ];
                     }
                     break;
                 case 1:
-                    $tag_decomposition['name']     = '';
-                    $tag_decomposition['type']     = '';
-                    $tag_decomposition['str']      = '[';
-                    $tag_decomposition['layout'][] = array( 0, '[' );
+                    $tag_decomposition['name'] = '';
+                    $tag_decomposition['type'] = '';
+                    $tag_decomposition['str'] = '[';
+                    $tag_decomposition['layout'][] = [ 0, '[' ];
                     break;
                 case 2:
-                    if (-1<$token_key && 'text'==$result[$token_key]['type']) {
+                    if (-1 < $token_key && 'text' == $result[$token_key]['type']) {
                         $result[$token_key]['str'] .= $tag_decomposition['str'];
                     } else {
-                        $result[++$token_key] = array(
+                        $result[++$token_key] = [
                                 'type' => 'text',
                                 'str' => $tag_decomposition['str']
-                            );
+                            ];
                     }
-                    $tag_decomposition = array();
-                    $tag_decomposition['name']     = '';
-                    $tag_decomposition['type']     = '';
-                    $tag_decomposition['str']      = '[';
-                    $tag_decomposition['layout'][] = array( 0, '[' );
+                    $tag_decomposition = [];
+                    $tag_decomposition['name'] = '';
+                    $tag_decomposition['type'] = '';
+                    $tag_decomposition['str'] = '[';
+                    $tag_decomposition['layout'][] = [ 0, '[' ];
                     break;
                 case 3:
-                    if (-1<$token_key && 'text'==$result[$token_key]['type']) {
+                    if (-1 < $token_key && 'text' == $result[$token_key]['type']) {
                         $result[$token_key]['str'] .= $tag_decomposition['str'];
                         $result[$token_key]['str'] .= $token[1];
                     } else {
-                        $result[++$token_key] = array(
+                        $result[++$token_key] = [
                                 'type' => 'text',
-                                'str' => $tag_decomposition['str'].$token[1]
-                            );
+                                'str' => $tag_decomposition['str'] . $token[1]
+                            ];
                     }
-                    $tag_decomposition = array();
+                    $tag_decomposition = [];
                     break;
                 case 4:
                     $tag_decomposition['type'] = 'close';
                     $tag_decomposition['str'] .= '/';
-                    $tag_decomposition['layout'][] = array( 1, '/' );
+                    $tag_decomposition['layout'][] = [ 1, '/' ];
                     break;
                 case 5:
                     $tag_decomposition['type'] = 'open';
                     $name = strtolower($token[1]);
                     $tag_decomposition['name'] = $name;
                     $tag_decomposition['str'] .= $token[1];
-                    $tag_decomposition['layout'][] = array( 2, $token[1] );
+                    $tag_decomposition['layout'][] = [ 2, $token[1] ];
                     $tag_decomposition['attrib'][$name] = '';
                     break;
                 case 6:
@@ -291,39 +296,39 @@ class bbcode {
                         $tag_decomposition['name'] = '';
                     }
                     if (13 == $previous_mode || 19 == $previous_mode) {
-                        $tag_decomposition['layout'][] = array( 7, $value );
+                        $tag_decomposition['layout'][] = [ 7, $value ];
                     }
                     $tag_decomposition['str'] .= ']';
-                    $tag_decomposition['layout'][] = array( 0, ']' );
+                    $tag_decomposition['layout'][] = [ 0, ']' ];
                     $result[++$token_key] = $tag_decomposition;
-                    $tag_decomposition = array();
+                    $tag_decomposition = [];
                     break;
                 case 7:
                     $tag_decomposition['name'] = strtolower($token[1]);
                     $tag_decomposition['str'] .= $token[1];
-                    $tag_decomposition['layout'][] = array( 2, $token[1] );
+                    $tag_decomposition['layout'][] = [ 2, $token[1] ];
                     break;
                 case 8:
                     $tag_decomposition['str'] .= '=';
-                    $tag_decomposition['layout'][] = array( 3, '=' );
+                    $tag_decomposition['layout'][] = [ 3, '=' ];
                     break;
                 case 9:
                     $tag_decomposition['type'] = 'open/close';
                     $tag_decomposition['str'] .= '/';
-                    $tag_decomposition['layout'][] = array( 1, '/' );
+                    $tag_decomposition['layout'][] = [ 1, '/' ];
                     break;
                 case 10:
                     $tag_decomposition['str'] .= $token[1];
-                    $tag_decomposition['layout'][] = array( 4, $token[1] );
+                    $tag_decomposition['layout'][] = [ 4, $token[1] ];
                     break;
                 case 11:
                     $tag_decomposition['str'] .= '"';
-                    $tag_decomposition['layout'][] = array( 5, '"' );
+                    $tag_decomposition['layout'][] = [ 5, '"' ];
                     $value = '';
                     break;
                 case 12:
                     $tag_decomposition['str'] .= "'";
-                    $tag_decomposition['layout'][] = array( 5, "'" );
+                    $tag_decomposition['layout'][] = [ 5, "'" ];
                     $value = '';
                     break;
                 case 13:
@@ -333,12 +338,12 @@ class bbcode {
                     break;
                 case 14:
                     $tag_decomposition['str'] .= $token[1];
-                    $tag_decomposition['layout'][] = array( 4, $token[1] );
+                    $tag_decomposition['layout'][] = [ 4, $token[1] ];
                     break;
                 case 15:
                     $name = strtolower($token[1]);
                     $tag_decomposition['str'] .= $token[1];
-                    $tag_decomposition['layout'][] = array( 6, $token[1] );
+                    $tag_decomposition['layout'][] = [ 6, $token[1] ];
                     $tag_decomposition['attrib'][$name] = '';
                     break;
                 case 16:
@@ -348,9 +353,9 @@ class bbcode {
                     break;
                 case 17:
                     $tag_decomposition['str'] .= $token[1];
-                    $tag_decomposition['layout'][] = array( 7, $value );
+                    $tag_decomposition['layout'][] = [ 7, $value ];
                     $value = '';
-                    $tag_decomposition['layout'][] = array( 5, $token[1] );
+                    $tag_decomposition['layout'][] = [ 5, $token[1] ];
                     break;
                 case 18:
                     $tag_decomposition['str'] .= $token[1];
@@ -364,22 +369,22 @@ class bbcode {
                     break;
                 case 20:
                     $tag_decomposition['str'] .= $token[1];
-                    if ( 13 == $previous_mode || 19 == $previous_mode ) {
-                        $tag_decomposition['layout'][] = array( 7, $value );
+                    if (13 == $previous_mode || 19 == $previous_mode) {
+                        $tag_decomposition['layout'][] = [ 7, $value ];
                     }
                     $value = '';
-                    $tag_decomposition['layout'][] = array( 4, $token[1] );
+                    $tag_decomposition['layout'][] = [ 4, $token[1] ];
                     break;
             }
         }
         if (count($tag_decomposition)) {
-            if ( -1 < $token_key && 'text' == $result[$token_key]['type'] ) {
+            if (-1 < $token_key && 'text' == $result[$token_key]['type']) {
                 $result[$token_key]['str'] .= $tag_decomposition['str'];
             } else {
-                $result[++$token_key] = array(
+                $result[++$token_key] = [
                         'type' => 'text',
                         'str' => $tag_decomposition['str']
-                    );
+                    ];
             }
         }
         $this -> syntax = $result;
@@ -387,29 +392,32 @@ class bbcode {
         return $result;
     }
 
-    function specialchars($string) {
-        $chars = array(
+    public function specialchars($string)
+    {
+        $chars = [
             '[' => '@l;',
             ']' => '@r;',
             '"' => '@q;',
             "'" => '@a;',
             '@' => '@at;'
-        );
+        ];
         return strtr($string, $chars);
     }
 
-    function unspecialchars($string) {
-        $chars = array(
-            '@l;'  => '[',
-            '@r;'  => ']',
-            '@q;'  => '"',
-            '@a;'  => "'",
+    public function unspecialchars($string)
+    {
+        $chars = [
+            '@l;' => '[',
+            '@r;' => ']',
+            '@q;' => '"',
+            '@a;' => "'",
             '@at;' => '@'
-        );
+        ];
         return strtr($string, $chars);
     }
 
-    function must_close_tag($current, $next) {
+    public function must_close_tag($current, $next)
+    {
         $class_vars = get_class_vars($this -> tags[$current]);
         $must_close = in_array($next, $class_vars['ends']);
         $class_vars = get_class_vars($this -> tags[$next]);
@@ -419,11 +427,12 @@ class bbcode {
         return $must_close;
     }
 
-    function normalize_bracket($syntax) {
-        $structure = array();
+    public function normalize_bracket($syntax)
+    {
+        $structure = [];
         $structure_key = -1;
         $level = 0;
-        $open_tags = array();
+        $open_tags = [];
         foreach ($syntax as $syntax_key => $val) {
             unset($val['layout']);
             switch ($val['type']) {
@@ -440,19 +449,20 @@ class bbcode {
                     break;
                 case 'open/close':
                     $val['attrib'] = array_map(
-            	        array(&$this, 'unspecialchars'), $val['attrib']
-            	    );
-                    foreach (array_reverse($open_tags,true) as $ult_key => $ultimate) {
+                        [&$this, 'unspecialchars'],
+                        $val['attrib']
+                    );
+                    foreach (array_reverse($open_tags, true) as $ult_key => $ultimate) {
                         if ($this -> must_close_tag($ultimate, $val['name'])) {
-                            $structure[++$structure_key] = array(
-                                    'type'  => 'close',
-                                    'name'  => $ultimate,
-                                    'str'   => '',
+                            $structure[++$structure_key] = [
+                                    'type' => 'close',
+                                    'name' => $ultimate,
+                                    'str' => '',
                                     'level' => --$level
-                                );
+                                ];
                             unset($open_tags[$ult_key]);
                         } else {
-                        	break;
+                            break;
                         }
                     }
                     $structure[++$structure_key] = $val;
@@ -460,18 +470,21 @@ class bbcode {
                     break;
                 case 'open':
                     $val['attrib'] = array_map(
-            	        array(&$this, 'unspecialchars'), $val['attrib']
-            	    );
-                    foreach (array_reverse($open_tags,true) as $ult_key => $ultimate) {
+                        [&$this, 'unspecialchars'],
+                        $val['attrib']
+                    );
+                    foreach (array_reverse($open_tags, true) as $ult_key => $ultimate) {
                         if ($this -> must_close_tag($ultimate, $val['name'])) {
-                            $structure[++$structure_key] = array(
-                                    'type'  => 'close',
-                                    'name'  => $ultimate,
-                                    'str'   => '',
+                            $structure[++$structure_key] = [
+                                    'type' => 'close',
+                                    'name' => $ultimate,
+                                    'str' => '',
                                     'level' => --$level
-                                );
+                                ];
                             unset($open_tags[$ult_key]);
-                        } else { break; }
+                        } else {
+                            break;
+                        }
                     }
                     $class_vars = get_class_vars($this -> tags[$val['name']]);
                     if ($class_vars['is_close']) {
@@ -488,51 +501,52 @@ class bbcode {
                     if (! count($open_tags)) {
                         $type = (-1 < $structure_key)
                             ? $structure[$structure_key]['type'] : false;
-                        if ( 'text' == $type ) {
+                        if ('text' == $type) {
                             $structure[$structure_key]['str'] .= $val['str'];
                         } else {
-                            $structure[++$structure_key] = array(
-                                    'type'  => 'text',
-                                    'str'   => $val['str'],
+                            $structure[++$structure_key] = [
+                                    'type' => 'text',
+                                    'str' => $val['str'],
                                     'level' => 0
-                                );
+                                ];
                         }
                         break;
                     }
                     if (! $val['name']) {
                         end($open_tags);
-                        list($ult_key, $ultimate) = each($open_tags);
+                        $ult_key = key($open_tags);
+                        $ultimate = current($open_tags);
                         $val['name'] = $ultimate;
                         $structure[++$structure_key] = $val;
                         $structure[$structure_key]['level'] = --$level;
                         unset($open_tags[$ult_key]);
                         break;
                     }
-                    if (! in_array($val['name'],$open_tags)) {
+                    if (! in_array($val['name'], $open_tags)) {
                         $type = (-1 < $structure_key)
                             ? $structure[$structure_key]['type'] : false;
                         if ('text' == $type) {
                             $structure[$structure_key]['str'] .= $val['str'];
                         } else {
-                            $structure[++$structure_key] = array(
-                                    'type'  => 'text',
-                                    'str'   => $val['str'],
+                            $structure[++$structure_key] = [
+                                    'type' => 'text',
+                                    'str' => $val['str'],
                                     'level' => $level
-                                );
+                                ];
                         }
                         break;
                     }
-                    foreach (array_reverse($open_tags,true) as $ult_key => $ultimate) {
+                    foreach (array_reverse($open_tags, true) as $ult_key => $ultimate) {
                         if ($ultimate != $val['name']) {
-                            $structure[++$structure_key] = array(
-                                    'type'  => 'close',
-                                    'name'  => $ultimate,
-                                    'str'   => '',
+                            $structure[++$structure_key] = [
+                                    'type' => 'close',
+                                    'name' => $ultimate,
+                                    'str' => '',
                                     'level' => --$level
-                                );
+                                ];
                             unset($open_tags[$ult_key]);
                         } else {
-                        	break;
+                            break;
                         }
                     }
                     $structure[++$structure_key] = $val;
@@ -540,28 +554,29 @@ class bbcode {
                     unset($open_tags[$ult_key]);
             }
         }
-        foreach (array_reverse($open_tags,true) as $ult_key => $ultimate) {
-            $structure[++$structure_key] = array(
-                    'type'  => 'close',
-                    'name'  => $ultimate,
-                    'str'   => '',
+        foreach (array_reverse($open_tags, true) as $ult_key => $ultimate) {
+            $structure[++$structure_key] = [
+                    'type' => 'close',
+                    'name' => $ultimate,
+                    'str' => '',
                     'level' => --$level
-                );
+                ];
             unset($open_tags[$ult_key]);
         }
         return $structure;
     }
 
-    function get_tree() {
+    public function get_tree()
+    {
         /* Превращаем $this -> syntax в правильную скобочную структуру */
         $structure = $this -> normalize_bracket($this -> syntax);
         /* Отслеживаем, имеют ли элементы неразрешенные подэлементы.
            Соответственно этому исправляем $structure. */
-        $normalized = array();
+        $normalized = [];
         $normal_key = -1;
         $level = 0;
-        $open_tags = array();
-        $not_tags = array();
+        $open_tags = [];
+        $not_tags = [];
         foreach ($structure as $structure_key => $val) {
             switch ($val['type']) {
                 case 'text':
@@ -584,7 +599,7 @@ class bbcode {
                         );
                         $children = $class_vars['children'];
                     } else {
-                        $children = array();
+                        $children = [];
                     }
                     if (isset($info['top_level'])) {
                         $top_level = $info['top_level'];
@@ -600,14 +615,14 @@ class bbcode {
                     if (! $level && ! $top_level || $is_open && ! $is_child) {
                         $type = (-1 < $normal_key)
                             ? $normalized[$normal_key]['type'] : false;
-                        if ( 'text' == $type ) {
+                        if ('text' == $type) {
                             $normalized[$normal_key]['str'] .= $val['str'];
                         } else {
-                            $normalized[++$normal_key] = array(
-                                    'type'  => 'text',
-                                    'str'   => $val['str'],
+                            $normalized[++$normal_key] = [
+                                    'type' => 'text',
+                                    'str' => $val['str'],
                                     'level' => $level
-                                );
+                                ];
                         }
                         break;
                     }
@@ -624,7 +639,7 @@ class bbcode {
                         );
                         $children = $class_vars['children'];
                     } else {
-                        $children = array();
+                        $children = [];
                     }
                     if (isset($info['top_level'])) {
                         $top_level = $info['top_level'];
@@ -641,14 +656,14 @@ class bbcode {
                         $not_tags[$val['level']] = $val['name'];
                         $type = (-1 < $normal_key)
                             ? $normalized[$normal_key]['type'] : false;
-                        if ( 'text' == $type ) {
+                        if ('text' == $type) {
                             $normalized[$normal_key]['str'] .= $val['str'];
                         } else {
-                            $normalized[++$normal_key] = array(
-                                    'type'  => 'text',
-                                    'str'   => $val['str'],
+                            $normalized[++$normal_key] = [
+                                    'type' => 'text',
+                                    'str' => $val['str'],
                                     'level' => $level
-                                );
+                                ];
                         }
                         break;
                     }
@@ -660,18 +675,18 @@ class bbcode {
                 case 'close':
                     $not_normal = isset($not_tags[$val['level']])
                         && $not_tags[$val['level']] = $val['name'];
-                    if ( $not_normal ) {
+                    if ($not_normal) {
                         unset($not_tags[$val['level']]);
                         $type = (-1 < $normal_key)
                             ? $normalized[$normal_key]['type'] : false;
-                        if ( 'text' == $type ) {
+                        if ('text' == $type) {
                             $normalized[$normal_key]['str'] .= $val['str'];
                         } else {
-                            $normalized[++$normal_key] = array(
-                                    'type'  => 'text',
-                                    'str'   => $val['str'],
+                            $normalized[++$normal_key] = [
+                                    'type' => 'text',
+                                    'str' => $val['str'],
                                     'level' => $level
-                                );
+                                ];
                         }
                         break;
                     }
@@ -684,57 +699,57 @@ class bbcode {
         }
         unset($structure);
         // Формируем дерево элементов
-        $result = array();
+        $result = [];
         $result_key = -1;
-        $open_tags = array();
+        $open_tags = [];
         $val_key = -1;
         foreach ($normalized as $normal_key => $val) {
             switch ($val['type']) {
                 case 'text':
                     if (! $val['level']) {
-                        $result[++$result_key] = array(
+                        $result[++$result_key] = [
                                 'type' => 'text',
                                 'str' => $val['str']
-                            );
+                            ];
                         break;
                     }
-                    $open_tags[$val['level']-1]['val'][] = array(
+                    $open_tags[$val['level'] - 1]['val'][] = [
                             'type' => 'text',
                             'str' => $val['str']
-                        );
+                        ];
                     break;
                 case 'open/close':
                     if (! $val['level']) {
-                        $result[++$result_key] = array(
-                                'type'   => 'item',
-                                'name'   => $val['name'],
+                        $result[++$result_key] = [
+                                'type' => 'item',
+                                'name' => $val['name'],
                                 'attrib' => $val['attrib'],
-                                'val'    => array()
-                            );
+                                'val' => []
+                            ];
                         break;
                     }
-                    $open_tags[$val['level']-1]['val'][] = array(
-                            'type'   => 'item',
-                            'name'   => $val['name'],
+                    $open_tags[$val['level'] - 1]['val'][] = [
+                            'type' => 'item',
+                            'name' => $val['name'],
                             'attrib' => $val['attrib'],
-                            'val'    => array()
-                        );
+                            'val' => []
+                        ];
                     break;
                 case 'open':
-                    $open_tags[$val['level']] = array(
-                            'type'   => 'item',
-                            'name'   => $val['name'],
+                    $open_tags[$val['level']] = [
+                            'type' => 'item',
+                            'name' => $val['name'],
                             'attrib' => $val['attrib'],
-                            'val'    => array()
-                        );
+                            'val' => []
+                        ];
                     break;
                 case 'close':
-                    if ( ! $val['level'] ) {
+                    if (! $val['level']) {
                         $result[++$result_key] = $open_tags[0];
                         unset($open_tags[0]);
                         break;
                     }
-                    $open_tags[$val['level']-1]['val'][] = $open_tags[$val['level']];
+                    $open_tags[$val['level'] - 1]['val'][] = $open_tags[$val['level']];
                     unset($open_tags[$val['level']]);
                     break;
             }
@@ -743,89 +758,93 @@ class bbcode {
         return $result;
     }
 
-    function get_syntax($tree = false) {
+    public function get_syntax($tree = false)
+    {
         if (! is_array($tree)) {
             $tree = $this -> tree;
         }
-        $syntax = array();
+        $syntax = [];
         foreach ($tree as $elem) {
             if ('text' == $elem['type']) {
-            	$syntax[] = array(
-            	    'type' => 'text',
-            	    'str' => $this -> specialchars($elem['str'])
-            	);
+                $syntax[] = [
+                    'type' => 'text',
+                    'str' => $this -> specialchars($elem['str'])
+                ];
             } else {
                 $sub_elems = $this -> get_syntax($elem['val']);
                 $str = '';
-                $layout = array(array(0, '['));
+                $layout = [[0, '[']];
                 foreach ($elem['attrib'] as $name => $val) {
                     $val = $this -> specialchars($val);
                     if ($str) {
-                    	$str .= ' ';
-                    	$layout[] = array(4, ' ');
-                    	$layout[] = array(6, $name);
+                        $str .= ' ';
+                        $layout[] = [4, ' '];
+                        $layout[] = [6, $name];
                     } else {
-                        $layout[] = array(2, $name);
+                        $layout[] = [2, $name];
                     }
                     $str .= $name;
                     if ($val) {
-                    	$str .= '="'.$val.'"';
-                    	$layout[] = array(3, '=');
-                    	$layout[] = array(5, '"');
-                    	$layout[] = array(7, $val);
-                    	$layout[] = array(5, '"');
+                        $str .= '="' . $val . '"';
+                        $layout[] = [3, '='];
+                        $layout[] = [5, '"'];
+                        $layout[] = [7, $val];
+                        $layout[] = [5, '"'];
                     }
                 }
                 if (count($sub_elems)) {
-                	$str = '['.$str.']';
+                    $str = '[' . $str . ']';
                 } else {
-                    $str = '['.$str.' /]';
-                    $layout[] = array(4, ' ');
-                    $layout[] = array(1, '/');
+                    $str = '[' . $str . ' /]';
+                    $layout[] = [4, ' '];
+                    $layout[] = [1, '/'];
                 }
-                $layout[] = array(0, ']');
-                $syntax[] = array(
+                $layout[] = [0, ']'];
+                $syntax[] = [
                     'type' => count($sub_elems) ? 'open' : 'open/close',
                     'str' => $str,
                     'name' => $elem['name'],
                     'attrib' => $elem['attrib'],
                     'layout' => $layout
-                );
-                foreach ($sub_elems as $sub_elem) { $syntax[] = $sub_elem; }
+                ];
+                foreach ($sub_elems as $sub_elem) {
+                    $syntax[] = $sub_elem;
+                }
                 if (count($sub_elems)) {
-                	$syntax[] = array(
-                	    'type' => 'close',
-                	    'str' => '[/'.$elem['name'].']',
-                	    'name' => $elem['name'],
-                	    'layout' => array(
-                	        array(0, '['),
-                	        array(1, '/'),
-                	        array(2, $elem['name']),
-                	        array(0, ']')
-                	    )
-                	);
+                    $syntax[] = [
+                        'type' => 'close',
+                        'str' => '[/' . $elem['name'] . ']',
+                        'name' => $elem['name'],
+                        'layout' => [
+                            [0, '['],
+                            [1, '/'],
+                            [2, $elem['name']],
+                            [0, ']']
+                        ]
+                    ];
                 }
             }
         }
         return $syntax;
     }
 
-    function replace_links($text) {
-        $text = nl2br(htmlspecialchars($text,ENT_NOQUOTES));
+    public function replace_links($text)
+    {
+        $text = nl2br(htmlspecialchars($text, ENT_NOQUOTES));
         $text = str_replace('  ', '&nbsp;&nbsp;', $text);
         if ($this -> autolinks) {
             $uri = "[\w\d-]+\.[\w\d-]+[^\s<\"\']*[^.,;\s<\"\'\)]+";
-            $search = array(
-                "'(.)((http|https|ftp)://".$uri.")'si",
-                "'([^/])(www\.".$uri.")'si",
+            $search = [
+                "'(.)((http|https|ftp)://" . $uri . ")'si",
+                "'([^/])(www\." . $uri . ")'si",
                 // https://stackoverflow.com/questions/24764212/preg-match-compilation-failed-invalid-range-in-character-class-at-offset
                 "'([^\w\d\-.])([\w\d\-.]+@[\w\d\-.]+\.[\w]+[^.,;\s<\"\'\)]+)'si"
-            );
-            $replace = array(
+            ];
+            $replace = [
                 '$1<a href="$2" target="_blank">$2</a>',
                 '$1<a href="http://$2" target="_blank">$2</a>',
                 '$1<a href="mailto:$2">$2</a>'
-            );
+            ];
             $text = preg_replace($search, $replace, $text);
         }
         foreach ($this -> mnemonics as $mnemonic => $value) {
@@ -834,7 +853,8 @@ class bbcode {
         return $text;
     }
 
-    function get_html($elems = false) {
+    public function get_html($elems = false)
+    {
         if (! is_array($elems)) {
             $elems = $this -> tree;
         }
@@ -844,7 +864,7 @@ class bbcode {
         foreach ($elems as $elem) {
             if ('text' == $elem['type']) {
                 $elem['str'] = $this -> replace_links($elem['str']);
-                for ($i=0; $i < $rbr; ++$i) {
+                for ($i = 0; $i < $rbr; ++$i) {
                     $elem['str'] = ltrim($elem['str']);
                     if ('<br />' == substr($elem['str'], 0, 6)) {
                         $elem['str'] = substr_replace($elem['str'], '', 0, 6);
@@ -855,7 +875,7 @@ class bbcode {
                 $class_vars = get_class_vars($this -> tags[$elem['name']]);
                 $lbr = $class_vars['lbr'];
                 $rbr = $class_vars['rbr'];
-                for ($i=0; $i < $lbr; ++$i) {
+                for ($i = 0; $i < $lbr; ++$i) {
                     $result = rtrim($result);
                     if ('<br />' == substr($result, -6)) {
                         $result = substr_replace($result, '', -6, 6);
@@ -863,7 +883,7 @@ class bbcode {
                 }
                 $handler = $this -> tags[$elem['name']];
                 if (class_exists($handler)) {
-                    $tag = new $handler;
+                    $tag = new $handler();
                     $tag -> tag = $elem['name'];
                     $tag -> attrib = $elem['attrib'];
                     $tag -> tags = $this -> tags;
@@ -881,19 +901,23 @@ class bbcode {
 }
 
 // Класс для тегов [a], [anchor] и [url]
-class bb_a extends bbcode {
-    var $ends = array(
-        '*','align','center','h1','h2','h3','hr','justify','left','list','php',
-        'quote','right','table','td','th','tr'
-    );
-    var $children = array(
-        'abbr','acronym','b','bbcode','code','color','font','i','img','nobb',
-        's','size','strike','sub','sup','tt','u'
-    );
-    function get_html($elems = false) {
+class bb_a extends bbcode
+{
+    public $ends = [
+        '*', 'align', 'center', 'h1', 'h2', 'h3', 'hr', 'justify', 'left', 'list', 'php',
+        'quote', 'right', 'table', 'td', 'th', 'tr'
+    ];
+    public $children = [
+        'abbr', 'acronym', 'b', 'bbcode', 'code', 'color', 'font', 'i', 'img', 'nobb',
+        's', 'size', 'strike', 'sub', 'sup', 'tt', 'u'
+    ];
+    public function get_html($elems = false)
+    {
         $text = '';
         foreach ($this -> tree as $val) {
-            if ('text' == $val['type']) { $text .= $val['str']; }
+            if ('text' == $val['type']) {
+                $text .= $val['str'];
+            }
         }
         $href = '';
         if (isset($this -> attrib['url'])) {
@@ -905,11 +929,13 @@ class bb_a extends bbcode {
         if (! $href && isset($this -> attrib['href'])) {
             $href = $this -> attrib['href'];
         }
-        if (! $href && ! isset($this -> attrib['anchor'])) { $href = $text; }
-        $protocols = array(
+        if (! $href && ! isset($this -> attrib['anchor'])) {
+            $href = $text;
+        }
+        $protocols = [
             'http://',  'https://',  'ftp://',  'file://',  'mailto:',
             '#',        '/',         '?',       './',       '../'
-        );
+        ];
         $is_http = false;
         foreach ($protocols as $val) {
             if ($val == substr($href, 0, strlen($val))) {
@@ -917,14 +943,16 @@ class bb_a extends bbcode {
                 break;
             }
         }
-        if ($href && ! $is_http) { $href = 'http://'.$href; }
+        if ($href && ! $is_http) {
+            $href = 'http://' . $href;
+        }
         $attr = 'class="bb"';
         if ($href) {
-        	$attr .= ' href="'.htmlspecialchars($href).'"';
+            $attr .= ' href="' . htmlspecialchars($href) . '"';
         }
         if (isset($this -> attrib['title'])) {
             $title = $this -> attrib['title'];
-            $attr .= ' title="'.htmlspecialchars($title).'"';
+            $attr .= ' title="' . htmlspecialchars($title) . '"';
         }
         $id = '';
         if (isset($this -> attrib['name'])) {
@@ -935,30 +963,44 @@ class bb_a extends bbcode {
         }
         if (isset($this -> attrib['anchor'])) {
             $id = $this -> attrib['anchor'];
-            if (! $id) { $id = $text; }
+            if (! $id) {
+                $id = $text;
+            }
         }
         if ($id) {
-        	if ($id[0] < 'A' || $id[0] > 'z') { $id = 'bb'.$id; }
-        	$attr .= ' id="'.htmlspecialchars($id).'"';
+            if ($id[0] < 'A' || $id[0] > 'z') {
+                $id = 'bb' . $id;
+            }
+            $attr .= ' id="' . htmlspecialchars($id) . '"';
         }
         if (isset($this -> attrib['target'])) {
             $target = $this -> attrib['target'];
-            $attr .= ' target="'.htmlspecialchars($target).'"';
+            $attr .= ' target="' . htmlspecialchars($target) . '"';
         }
-        return '<a '.$attr.'>'.parent::get_html($this -> tree).'</a>';
+        return '<a ' . $attr . '>' . parent::get_html($this -> tree) . '</a>';
     }
 }
 
 // Класс для тегов [align], [center], [justify], [left] и [right]
-class bb_align extends bbcode {
-    var $rbr = 1;
-    var $ends = array('*','tr','td','th');
-    function get_html($elems = false) {
+class bb_align extends bbcode
+{
+    public $rbr = 1;
+    public $ends = ['*', 'tr', 'td', 'th'];
+    public function get_html($elems = false)
+    {
         $align = '';
-        if (isset($this -> attrib['justify'])) { $align = 'justify'; }
-        if (isset($this -> attrib['left'])) { $align = 'left'; }
-        if (isset($this -> attrib['right'])) { $align = 'right'; }
-        if (isset($this -> attrib['center'])) { $align = 'center'; }
+        if (isset($this -> attrib['justify'])) {
+            $align = 'justify';
+        }
+        if (isset($this -> attrib['left'])) {
+            $align = 'left';
+        }
+        if (isset($this -> attrib['right'])) {
+            $align = 'right';
+        }
+        if (isset($this -> attrib['center'])) {
+            $align = 'center';
+        }
         if (! $align && isset($this -> attrib['align'])) {
             switch (strtolower($this -> attrib['align'])) {
                 case 'left':
@@ -975,281 +1017,327 @@ class bb_align extends bbcode {
                     break;
             }
         }
-        return '<div class="bb" align="'.$align.'">'
-            .parent::get_html($this -> tree).'</div>';
+        return '<div class="bb" align="' . $align . '">'
+            . parent::get_html($this -> tree) . '</div>';
     }
 }
 
 // Класс для тега [color]
-class bb_color extends bbcode {
-    var $ends = array(
-        '*','address','align','center','h1','h2','h3','hr','justify',
-        'left','list','php','quote','right','table','td','th','tr'
-    );
-    var $children = array(
-        'a','abbr','acronym','anchor','b','bbcode','code','color','email',
-        'font','google','i','img','nobb','s','size','strike','sub','sup','tt',
-        'u','url'
-    );
-    function get_html($elems = false) {
+class bb_color extends bbcode
+{
+    public $ends = [
+        '*', 'address', 'align', 'center', 'h1', 'h2', 'h3', 'hr', 'justify',
+        'left', 'list', 'php', 'quote', 'right', 'table', 'td', 'th', 'tr'
+    ];
+    public $children = [
+        'a', 'abbr', 'acronym', 'anchor', 'b', 'bbcode', 'code', 'color', 'email',
+        'font', 'google', 'i', 'img', 'nobb', 's', 'size', 'strike', 'sub', 'sup', 'tt',
+        'u', 'url'
+    ];
+    public function get_html($elems = false)
+    {
         $color = htmlspecialchars($this -> attrib['color']);
-        return '<font color="'.$color.'">'.parent::get_html($this -> tree)
-            .'</font>';
+        return '<font color="' . $color . '">' . parent::get_html($this -> tree)
+            . '</font>';
     }
 }
 
 // Класс для тегов [s] и [strike]
-class bb_del extends bbcode {
-    var $ends = array(
-        '*','address','align','center','h1','h2','h3','hr','justify',
-        'left','list','php','quote','right','table','td','th','tr'
-    );
-    var $children = array(
-        'a','abbr','acronym','anchor','b','bbcode','code','color','email',
-        'font','google','i','img','nobb','s','size','strike','sub','sup','tt',
-        'u','url'
-    );
-    function get_html($elems = false) {
-        return '<del>'.parent::get_html($this -> tree).'</del>';
+class bb_del extends bbcode
+{
+    public $ends = [
+        '*', 'address', 'align', 'center', 'h1', 'h2', 'h3', 'hr', 'justify',
+        'left', 'list', 'php', 'quote', 'right', 'table', 'td', 'th', 'tr'
+    ];
+    public $children = [
+        'a', 'abbr', 'acronym', 'anchor', 'b', 'bbcode', 'code', 'color', 'email',
+        'font', 'google', 'i', 'img', 'nobb', 's', 'size', 'strike', 'sub', 'sup', 'tt',
+        'u', 'url'
+    ];
+    public function get_html($elems = false)
+    {
+        return '<del>' . parent::get_html($this -> tree) . '</del>';
     }
 }
 
 // Класс для тега [email]
-class bb_email extends bbcode {
-    var $ends = array(
-        '*','address','align','center','h1','h2','h3','hr','justify',
-        'left','list','php','quote','right','table','td','th','tr'
-    );
-    var $children = array(
-        'abbr','acronym','b','bbcode','code','color','email','font','i','img',
-        'nobb','s','size','strike','sub','sup','tt','u'
-    );
-    function get_html($elems = false) {
+class bb_email extends bbcode
+{
+    public $ends = [
+        '*', 'address', 'align', 'center', 'h1', 'h2', 'h3', 'hr', 'justify',
+        'left', 'list', 'php', 'quote', 'right', 'table', 'td', 'th', 'tr'
+    ];
+    public $children = [
+        'abbr', 'acronym', 'b', 'bbcode', 'code', 'color', 'email', 'font', 'i', 'img',
+        'nobb', 's', 'size', 'strike', 'sub', 'sup', 'tt', 'u'
+    ];
+    public function get_html($elems = false)
+    {
         $attr = ' class="bb_email"';
         $href = $this -> attrib['email'];
         if (! $href) {
             foreach ($this -> tree as $text) {
-                if ('text' == $text['type']) { $href .= $text['str']; }
+                if ('text' == $text['type']) {
+                    $href .= $text['str'];
+                }
             }
         }
-        $protocols = array('mailto:');
+        $protocols = ['mailto:'];
         $is_http = false;
         foreach ($protocols as $val) {
-            if ($val == substr($href,0,strlen($val))) {
+            if ($val == substr($href, 0, strlen($val))) {
                 $is_http = true;
                 break;
             }
         }
-        if (! $is_http) { $href = 'mailto:'.$href; }
-        if ($href) { $attr .= ' href="'.htmlspecialchars($href).'"'; }
+        if (! $is_http) {
+            $href = 'mailto:' . $href;
+        }
+        if ($href) {
+            $attr .= ' href="' . htmlspecialchars($href) . '"';
+        }
         $title = isset($this -> attrib['title']) ? $this -> attrib['title'] : '';
-        if ($title) { $attr .= ' title="'.htmlspecialchars($title).'"'; }
+        if ($title) {
+            $attr .= ' title="' . htmlspecialchars($title) . '"';
+        }
         $name = isset($this -> attrib['name']) ? $this -> attrib['name'] : '';
-        if ($name) { $attr .= ' name="'.htmlspecialchars($name).'"'; }
+        if ($name) {
+            $attr .= ' name="' . htmlspecialchars($name) . '"';
+        }
         $target = isset($this -> attrib['target']) ? $this -> attrib['target'] : '';
-        if ($target) { $attr .= ' target="'.htmlspecialchars($target).'"'; }
-        return '<a'.$attr.'>'.parent::get_html($this -> tree).'</a>';
+        if ($target) {
+            $attr .= ' target="' . htmlspecialchars($target) . '"';
+        }
+        return '<a' . $attr . '>' . parent::get_html($this -> tree) . '</a>';
     }
 }
 
 // Класс для тега [font]
-class bb_font extends bbcode {
-    var $ends = array(
-        '*','address','align','center','h1','h2','h3','hr','justify',
-        'left','list','php','quote','right','table','td','th','tr'
-    );
-    var $children = array(
-        'a','abbr','acronym','anchor','b','bbcode','code','color','email',
-        'font','font','google','i','img','nobb','s','size','strike','sub','sup',
-        'tt','u','url'
-    );
-    function get_html($elems = false) {
+class bb_font extends bbcode
+{
+    public $ends = [
+        '*', 'address', 'align', 'center', 'h1', 'h2', 'h3', 'hr', 'justify',
+        'left', 'list', 'php', 'quote', 'right', 'table', 'td', 'th', 'tr'
+    ];
+    public $children = [
+        'a', 'abbr', 'acronym', 'anchor', 'b', 'bbcode', 'code', 'color', 'email',
+        'font', 'font', 'google', 'i', 'img', 'nobb', 's', 'size', 'strike', 'sub', 'sup',
+        'tt', 'u', 'url'
+    ];
+    public function get_html($elems = false)
+    {
         $face = $this -> attrib['font'];
-        $attr = ' face="'.htmlspecialchars($face).'"';
+        $attr = ' face="' . htmlspecialchars($face) . '"';
         $color = isset($this -> attrib['color']) ? $this -> attrib['color'] : '';
-        if ($color) { $attr .= ' color="'.htmlspecialchars($color).'"'; }
+        if ($color) {
+            $attr .= ' color="' . htmlspecialchars($color) . '"';
+        }
         $size = isset($this -> attrib['size']) ? $this -> attrib['size'] : '';
-        if ($size) { $attr .= ' size="'.htmlspecialchars($size).'"'; }
-        return '<font'.$attr.'>'.parent::get_html($this -> tree).'</font>';
+        if ($size) {
+            $attr .= ' size="' . htmlspecialchars($size) . '"';
+        }
+        return '<font' . $attr . '>' . parent::get_html($this -> tree) . '</font>';
     }
 }
 
 // Класс для тега [hr]
-class bb_hr extends bbcode {
-    var $is_close = true;
-    var $rbr = 1;
-    var $ends = array();
-    var $children = array();
-    function get_html($elems = false) {
+class bb_hr extends bbcode
+{
+    public $is_close = true;
+    public $rbr = 1;
+    public $ends = [];
+    public $children = [];
+    public function get_html($elems = false)
+    {
         return '<hr class="bb" />';
     }
 }
 
 // Класс для тега [i]
-class bb_i extends bbcode {
-    var $ends = array(
-        '*','address','align','center','h1','h2','h3','hr','justify',
-        'left','list','php','quote','right','table','td','th','tr'
-    );
-    var $children = array(
-        'a','abbr','acronym','anchor','b','bbcode','code','color','email',
-        'font','google','i','img','nobb','s','size','strike','sub','sup','tt',
-        'u','url'
-    );
-    function get_html($elems = false) {
-        return '<i>'.parent::get_html($this -> tree).'</i>';
+class bb_i extends bbcode
+{
+    public $ends = [
+        '*', 'address', 'align', 'center', 'h1', 'h2', 'h3', 'hr', 'justify',
+        'left', 'list', 'php', 'quote', 'right', 'table', 'td', 'th', 'tr'
+    ];
+    public $children = [
+        'a', 'abbr', 'acronym', 'anchor', 'b', 'bbcode', 'code', 'color', 'email',
+        'font', 'google', 'i', 'img', 'nobb', 's', 'size', 'strike', 'sub', 'sup', 'tt',
+        'u', 'url'
+    ];
+    public function get_html($elems = false)
+    {
+        return '<i>' . parent::get_html($this -> tree) . '</i>';
     }
 }
 
 // Класс для тега [img]
-class bb_img extends bbcode {
-    var $ends = array();
-    var $children = array();
-    function get_html($elems = false) {
+class bb_img extends bbcode
+{
+    public $ends = [];
+    public $children = [];
+    public function get_html($elems = false)
+    {
         $attr = 'alt=""';
         if (isset($this -> attrib['width'])) {
             $width = (int) $this -> attrib['width'];
-            $attr .= $width ? ' width="'.$width.'"' : '';
+            $attr .= $width ? ' width="' . $width . '"' : '';
         }
         if (isset($this -> attrib['height'])) {
             $height = (int) $this -> attrib['height'];
-            $attr .= $height ? ' height="'.$height.'"' : '';
+            $attr .= $height ? ' height="' . $height . '"' : '';
         }
         if (isset($this -> attrib['border'])) {
             $border = (int) $this -> attrib['border'];
-            $attr .= ' border="'.$border.'"';
+            $attr .= ' border="' . $border . '"';
         }
         $src = '';
         foreach ($this -> tree as $text) {
-            if ('text' == $text['type']) { $src .= $text['str']; }
+            if ('text' == $text['type']) {
+                $src .= $text['str'];
+            }
         }
         $src = htmlentities($src, ENT_QUOTES);
-        $src = str_replace('.', '&#'.ord('.').';', $src);
-        $src = str_replace(':', '&#'.ord(':').';', $src);
-        $src = str_replace('(', '&#'.ord('(').';', $src);
-        $src = str_replace(')', '&#'.ord(')').';', $src);
+        $src = str_replace('.', '&#' . ord('.') . ';', $src);
+        $src = str_replace(':', '&#' . ord(':') . ';', $src);
+        $src = str_replace('(', '&#' . ord('(') . ';', $src);
+        $src = str_replace(')', '&#' . ord(')') . ';', $src);
 
-        return "<img class=reloadimage title=$src src=pic.php?url=".$src." />";
-//      return '<img src="'.$src.'" '.$attr.' />';
+        return "<img class=reloadimage title=$src src=pic.php?url=" . $src . ' />';
+        //      return '<img src="'.$src.'" '.$attr.' />';
     }
 }
 
 // Класс для тега [quote]
-class bb_quote extends bbcode {
-    var $rbr = 1;
-    var $ends = array();
-    function get_html($elems = false) {
+class bb_quote extends bbcode
+{
+    public $rbr = 1;
+    public $ends = [];
+    public function get_html($elems = false)
+    {
         $author = htmlspecialchars($this -> attrib['quote']);
-        if ($author) $author = "(\n<b style=\"color: white;\">".$author."</b>\n)";
-        $author = "<div style=\"border: 3px double rgb(65, 86, 128); padding: 1px 4px 2px;\">\nЦитата ".$author." </div>";
-        return $author."<div style=\"border-style: none double double; border-color: -moz-use-text-color rgb(65, 86, 128) rgb(65, 86, 128); border-width: medium 3px 3px; padding: 4px 4px 6px;\">".parent::get_html($this -> tree)
-            ."</div>";
+        if ($author) {
+            $author = "(\n<b style=\"color: white;\">" . $author . "</b>\n)";
+        }
+        $author = "<div style=\"border: 3px double rgb(65, 86, 128); padding: 1px 4px 2px;\">\nЦитата " . $author . ' </div>';
+        return $author . '<div style="border-style: none double double; border-color: -moz-use-text-color rgb(65, 86, 128) rgb(65, 86, 128); border-width: medium 3px 3px; padding: 4px 4px 6px;">' . parent::get_html($this -> tree)
+            . '</div>';
     }
 }
 
 // Класс для тега [size]
-class bb_size extends bbcode {
-    var $ends = array(
-        '*','address','align','center','h1','h2','h3','hr','justify',
-        'left','list','php','quote','right','table','td','th','tr'
-    );
-    var $children = array(
-        'a','abbr','acronym','anchor','b','bbcode','code','color','email',
-        'font','google','i','img','nobb','s','size','strike','sub','sup','tt',
-        'u','url'
-    );
-    function get_html($elems = false) {
+class bb_size extends bbcode
+{
+    public $ends = [
+        '*', 'address', 'align', 'center', 'h1', 'h2', 'h3', 'hr', 'justify',
+        'left', 'list', 'php', 'quote', 'right', 'table', 'td', 'th', 'tr'
+    ];
+    public $children = [
+        'a', 'abbr', 'acronym', 'anchor', 'b', 'bbcode', 'code', 'color', 'email',
+        'font', 'google', 'i', 'img', 'nobb', 's', 'size', 'strike', 'sub', 'sup', 'tt',
+        'u', 'url'
+    ];
+    public function get_html($elems = false)
+    {
         $sign = '';
         if (strlen($this -> attrib['size'])) {
             $sign = $this -> attrib['size'][0];
         }
-        if ('+' != $sign) { $sign = ''; }
+        if ('+' != $sign) {
+            $sign = '';
+        }
         $size = (int) $this -> attrib['size'];
         if (7 < $size) {
-        	$size = 7;
-        	$sign = '';
+            $size = 7;
+            $sign = '';
         }
         if (-6 > $size) {
             $size = '-6';
-        	$sign = '';
+            $sign = '';
         }
         if (0 == $size) {
             $size = 3;
         }
-        $size = $sign.$size;
-        return '<font size="'.$size.'">'.parent::get_html($this -> tree).'</font>';
+        $size = $sign . $size;
+        return '<font size="' . $size . '">' . parent::get_html($this -> tree) . '</font>';
     }
 }
 
 // Класс для тега [b]
-class bb_strong extends bbcode {
-    var $ends = array(
-        '*','address','align','center','h1','h2','h3','hr','justify',
-        'left','list','php','quote','right','table','td','th','tr'
-    );
-    var $children = array(
-        'a','abbr','acronym','anchor','b','bbcode','code','color','email',
-        'font','google','i','img','nobb','s','size','strike','sub','sup','tt',
-        'u','url'
-    );
-    function get_html($elems = false) {
-        return '<strong>'.parent::get_html($this -> tree).'</strong>';
+class bb_strong extends bbcode
+{
+    public $ends = [
+        '*', 'address', 'align', 'center', 'h1', 'h2', 'h3', 'hr', 'justify',
+        'left', 'list', 'php', 'quote', 'right', 'table', 'td', 'th', 'tr'
+    ];
+    public $children = [
+        'a', 'abbr', 'acronym', 'anchor', 'b', 'bbcode', 'code', 'color', 'email',
+        'font', 'google', 'i', 'img', 'nobb', 's', 'size', 'strike', 'sub', 'sup', 'tt',
+        'u', 'url'
+    ];
+    public function get_html($elems = false)
+    {
+        return '<strong>' . parent::get_html($this -> tree) . '</strong>';
     }
 }
 
 // Класс для тега [sub]
-class bb_sub extends bbcode {
-    var $ends = array(
-        '*','address','align','center','h1','h2','h3','hr','justify',
-        'left','list','php','quote','right','table','td','th','tr'
-    );
-    var $children = array(
-        'a','abbr','acronym','anchor','b','bbcode','code','color','email',
-        'font','google','i','img','nobb','s','size','strike','sub','sup','tt',
-        'u','url'
-    );
-    function get_html($elems = false) {
-        return '<sub>'.parent::get_html($this -> tree).'</sub>';
+class bb_sub extends bbcode
+{
+    public $ends = [
+        '*', 'address', 'align', 'center', 'h1', 'h2', 'h3', 'hr', 'justify',
+        'left', 'list', 'php', 'quote', 'right', 'table', 'td', 'th', 'tr'
+    ];
+    public $children = [
+        'a', 'abbr', 'acronym', 'anchor', 'b', 'bbcode', 'code', 'color', 'email',
+        'font', 'google', 'i', 'img', 'nobb', 's', 'size', 'strike', 'sub', 'sup', 'tt',
+        'u', 'url'
+    ];
+    public function get_html($elems = false)
+    {
+        return '<sub>' . parent::get_html($this -> tree) . '</sub>';
     }
 }
 
 // Класс для тега [sup]
-class bb_sup extends bbcode {
-    var $ends = array(
-        '*','address','align','center','h1','h2','h3','hr','justify',
-        'left','list','php','quote','right','table','td','th','tr'
-    );
-    var $children = array(
-        'a','abbr','acronym','anchor','b','bbcode','code','color','email',
-        'font','google','i','img','nobb','s','size','strike','sub','sup','tt',
-        'u','url'
-    );
-    function get_html($elems = false) {
-        return '<sup>'.parent::get_html($this -> tree).'</sup>';
+class bb_sup extends bbcode
+{
+    public $ends = [
+        '*', 'address', 'align', 'center', 'h1', 'h2', 'h3', 'hr', 'justify',
+        'left', 'list', 'php', 'quote', 'right', 'table', 'td', 'th', 'tr'
+    ];
+    public $children = [
+        'a', 'abbr', 'acronym', 'anchor', 'b', 'bbcode', 'code', 'color', 'email',
+        'font', 'google', 'i', 'img', 'nobb', 's', 'size', 'strike', 'sub', 'sup', 'tt',
+        'u', 'url'
+    ];
+    public function get_html($elems = false)
+    {
+        return '<sup>' . parent::get_html($this -> tree) . '</sup>';
     }
 }
 
 // Класс для тега [u]
-class bb_u extends bbcode {
-    var $ends = array(
-        '*','address','align','center','h1','h2','h3','hr',
-        'justify','left','list','php','quote','right','table','td','th','tr'
-    );
-    var $children = array(
-        'a','abbr','acronym','anchor','b','bbcode','code','color','email',
-        'font','google','i','img','nobb','s','size','strike','sub','sup','tt',
-        'u','url'
-    );
-    function get_html($elems = false) {
-        return '<u>'.parent::get_html($this -> tree).'</u>';
+class bb_u extends bbcode
+{
+    public $ends = [
+        '*', 'address', 'align', 'center', 'h1', 'h2', 'h3', 'hr',
+        'justify', 'left', 'list', 'php', 'quote', 'right', 'table', 'td', 'th', 'tr'
+    ];
+    public $children = [
+        'a', 'abbr', 'acronym', 'anchor', 'b', 'bbcode', 'code', 'color', 'email',
+        'font', 'google', 'i', 'img', 'nobb', 's', 'size', 'strike', 'sub', 'sup', 'tt',
+        'u', 'url'
+    ];
+    public function get_html($elems = false)
+    {
+        return '<u>' . parent::get_html($this -> tree) . '</u>';
     }
 }
 
 // Преобразовать BB-коды в HTML.
-function bb ($text)
+function bb($text)
 {
-    $bb = new bbcode ($text);
-    return $bb->get_html ();
+    $bb = new bbcode($text);
+    return $bb->get_html();
 }
-
-?>
