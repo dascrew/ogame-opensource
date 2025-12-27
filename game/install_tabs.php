@@ -145,10 +145,6 @@ $tab_botstrat = [    // Bot strategies
     'id' => 'INT AUTO_INCREMENT PRIMARY KEY', 'name' => 'TEXT', 'source' => 'TEXT',
 ];
 
-$tab_mods = [    // Modifications
-    'id' => 'INT AUTO_INCREMENT PRIMARY KEY', 'var' => 'TEXT', 'value' => 'TEXT'
-];
-
 $tabs = [
     'uni' => &$tab_uni,
     'users' => &$tab_users,
@@ -177,5 +173,4 @@ $tabs = [
     'botvars' => &$tab_botvars,
     'userlogs' => &$tab_userlogs,
     'botstrat' => &$tab_botstrat,
-    'mods' => &$tab_mods,
 ];

@@ -143,7 +143,7 @@ function MDBArray($result)
 function LockTables()
 {
     global $db_prefix;
-    $tabs = ['users', 'planets', 'ally', 'allyranks', 'allyapps', 'buddy', 'messages', 'notes', 'errors', 'debug', 'reports', 'browse', 'queue', 'buildqueue', 'fleet', 'union', 'battledata', 'fleetlogs', 'iplogs', 'pranger', 'exptab', 'coltab', 'template', 'botvars', 'userlogs', 'botstrat', 'mods'];
+    $tabs = ['users', 'planets', 'ally', 'allyranks', 'allyapps', 'buddy', 'messages', 'notes', 'errors', 'debug', 'reports', 'browse', 'queue', 'buildqueue', 'fleet', 'union', 'battledata', 'fleetlogs', 'iplogs', 'pranger', 'exptab', 'coltab', 'template', 'botvars', 'userlogs', 'botstrat'];
     $query = 'LOCK TABLES ' . $db_prefix . 'uni WRITE';
     foreach ($tabs as $i => $name) {
         $query .= ', ' . $db_prefix . $name . ' WRITE';
