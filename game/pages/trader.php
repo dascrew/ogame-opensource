@@ -4,118 +4,103 @@
 
 $trader_dm = 2500;
 
-$TraderMessage = "";
-$TraderError = "";
+$TraderMessage = '';
+$TraderError = '';
 
-loca_add ( "menu", $GlobalUser['lang'] );
-loca_add ( "trader", $GlobalUser['lang'] );
+loca_add('menu', $GlobalUser['lang']);
+loca_add('trader', $GlobalUser['lang']);
 
-if ( key_exists ('cp', $_GET)) SelectPlanet ($GlobalUser['player_id'], intval($_GET['cp']));
-$GlobalUser['aktplanet'] = GetSelectedPlanet ($GlobalUser['player_id']);
+if (key_exists('cp', $_GET)) {
+    SelectPlanet($GlobalUser['player_id'], intval($_GET['cp']));
+}
+$GlobalUser['aktplanet'] = GetSelectedPlanet($GlobalUser['player_id']);
 $now = time();
-UpdateQueue ( $now );
-$aktplanet = GetPlanet ( $GlobalUser['aktplanet'] );
-ProdResources ( $aktplanet, $aktplanet['lastpeek'], $now );
-UpdatePlanetActivity ( $aktplanet['planet_id'] );
-UpdateLastClick ( $GlobalUser['player_id'] );
+UpdateQueue($now);
+$aktplanet = GetPlanet($GlobalUser['aktplanet']);
+ProdResources($aktplanet, $aktplanet['lastpeek'], $now);
+UpdatePlanetActivity($aktplanet['planet_id']);
+UpdateLastClick($GlobalUser['player_id']);
 $session = $_GET['session'];
 
 $not_enough = false;
 
-function CallNewTrader ()
+function CallNewTrader()
 {
     global $GlobalUser;
     global $db_prefix;
     global $trader_dm;
 
     // Generate new rates.
-    $offer_id = intval ($_POST['offer_id']);
-    $rand = mt_rand (0, 99);
-    if ( $rand < 10 ) {
+    $offer_id = intval($_POST['offer_id']);
+    $rand = mt_rand(0, 99);
+    if ($rand < 10) {
         $GlobalUser['rate_m'] = 3;
         $GlobalUser['rate_k'] = 2;
         $GlobalUser['rate_d'] = 1;
-    }
-    else if ( $rand < 20 ) {
+    } elseif ($rand < 20) {
 
-        if ( $offer_id == 1) {
+        if ($offer_id == 1) {
             $GlobalUser['rate_m'] = 3;
             $GlobalUser['rate_k'] = 1.60;
             $GlobalUser['rate_d'] = 0.80;
-        }
-
-        else if ( $offer_id == 2) {
+        } elseif ($offer_id == 2) {
             $GlobalUser['rate_m'] = 2.40;
             $GlobalUser['rate_k'] = 2;
             $GlobalUser['rate_d'] = 0.80;
-        }
-
-        else if ( $offer_id == 3) {
+        } elseif ($offer_id == 3) {
             $GlobalUser['rate_m'] = 2.40;
             $GlobalUser['rate_k'] = 1.60;
             $GlobalUser['rate_d'] = 1;
         }
 
-    }
-    else {
-        if ( $offer_id == 1) {
+    } else {
+        if ($offer_id == 1) {
             $GlobalUser['rate_m'] = 3;
-            $GlobalUser['rate_k'] = mt_rand ( 140, 200) / 100;
-            $GlobalUser['rate_d'] = mt_rand ( 70, 100) / 100;
-        }
-
-        else if ( $offer_id == 2) {
-            $GlobalUser['rate_m'] = mt_rand ( 210, 300) / 100;
+            $GlobalUser['rate_k'] = mt_rand(140, 200) / 100;
+            $GlobalUser['rate_d'] = mt_rand(70, 100) / 100;
+        } elseif ($offer_id == 2) {
+            $GlobalUser['rate_m'] = mt_rand(210, 300) / 100;
             $GlobalUser['rate_k'] = 2;
-            $GlobalUser['rate_d'] = mt_rand ( 70, 100) / 100;
-        }
-
-        else if ( $offer_id == 3) {
-            $GlobalUser['rate_m'] = mt_rand ( 210, 300) / 100;
-            $GlobalUser['rate_k'] = mt_rand ( 140, 200) / 100;
+            $GlobalUser['rate_d'] = mt_rand(70, 100) / 100;
+        } elseif ($offer_id == 3) {
+            $GlobalUser['rate_m'] = mt_rand(210, 300) / 100;
+            $GlobalUser['rate_k'] = mt_rand(140, 200) / 100;
             $GlobalUser['rate_d'] = 1;
         }
     }
     $GlobalUser['trader'] = $offer_id;
 
     // Write the values to the database.
-    if ( $offer_id > 0 && $offer_id <= 3 )
-    {
+    if ($offer_id > 0 && $offer_id <= 3) {
         // Списать ТМ.
-        if ( $GlobalUser['dm'] >= $trader_dm ) $GlobalUser['dm'] -= $trader_dm;
-        else {
+        if ($GlobalUser['dm'] >= $trader_dm) {
+            $GlobalUser['dm'] -= $trader_dm;
+        } else {
             $GlobalUser['dmfree'] -= $trader_dm - $GlobalUser['dm'];
             $GlobalUser['dm'] = 0;
         }
 
-        $query = "UPDATE ".$db_prefix."users SET dm = '".$GlobalUser['dm']."', dmfree = '".$GlobalUser['dmfree']."', trader=".$GlobalUser['trader'].", rate_m='".$GlobalUser['rate_m']."', rate_k = '".$GlobalUser['rate_k']."', rate_d = '".$GlobalUser['rate_d']."' WHERE player_id = " . $GlobalUser['player_id'];
-        dbquery ( $query );
+        $query = 'UPDATE ' . $db_prefix . "users SET dm = '" . $GlobalUser['dm'] . "', dmfree = '" . $GlobalUser['dmfree'] . "', trader=" . $GlobalUser['trader'] . ", rate_m='" . $GlobalUser['rate_m'] . "', rate_k = '" . $GlobalUser['rate_k'] . "', rate_d = '" . $GlobalUser['rate_d'] . "' WHERE player_id = " . $GlobalUser['player_id'];
+        dbquery($query);
+    } else {
+        $GlobalUser['trader'] = 0;
     }
-    else $GlobalUser['trader'] = 0;
 }
 
 // POST request processing.
-if ( method () === "POST" )
-{
+if (method() === 'POST') {
     $dm = $GlobalUser['dm'] + $GlobalUser['dmfree'];
 
-    if ( $GlobalUser['trader'] > 0 )        // Exchange resources.
-    {
-        if ( key_exists ( 'call_trader', $_POST) )
-        {
-            if ( $dm < $trader_dm )
-            {
+    if ($GlobalUser['trader'] > 0) {        // Exchange resources.
+        if (key_exists('call_trader', $_POST)) {
+            if ($dm < $trader_dm) {
                 $not_enough = true;
-                $TraderError = loca("TRADER_ERROR_DM") . "<br>";
-            }
-            else
-            {
+                $TraderError = loca('TRADER_ERROR_DM') . '<br>';
+            } else {
                 $not_enough = false;
-                CallNewTrader ();
+                CallNewTrader();
             }
-        }
-        else if ( key_exists ( 'trade', $_POST) )
-        {
+        } elseif (key_exists('trade', $_POST)) {
             $TraderError = '';
 
             $value_1 = 0;
@@ -123,122 +108,130 @@ if ( method () === "POST" )
             $value_3 = 0;
 
             if (key_exists('1_value', $_POST)) {
-                $value_1 = abs (str_replace ( ".", "", $_POST['1_value'] ));
+                $value_1 = abs(str_replace('.', '', $_POST['1_value']));
             }
             if (key_exists('2_value', $_POST)) {
-                $value_2 = abs (str_replace ( ".", "", $_POST['2_value'] ));
+                $value_2 = abs(str_replace('.', '', $_POST['2_value']));
             }
             if (key_exists('3_value', $_POST)) {
-                $value_3 = abs (str_replace ( ".", "", $_POST['3_value'] ));
+                $value_3 = abs(str_replace('.', '', $_POST['3_value']));
             }
 
-            if ( $GlobalUser['trader'] == 1)
-            {
-                $crys = floor ( $aktplanet['k'] + $value_2 );
-                $deut = floor ( $aktplanet['d'] + $value_3 );
-                $met = floor ( $value_2 * $GlobalUser['rate_m'] / $GlobalUser['rate_k'] ) + 
-                       floor ( $value_3 * $GlobalUser['rate_m'] / $GlobalUser['rate_d'] );
+            if ($GlobalUser['trader'] == 1) {
+                $crys = floor($aktplanet['k'] + $value_2);
+                $deut = floor($aktplanet['d'] + $value_3);
+                $met = floor($value_2 * $GlobalUser['rate_m'] / $GlobalUser['rate_k']) +
+                       floor($value_3 * $GlobalUser['rate_m'] / $GlobalUser['rate_d']);
 
-                if ( $met > $aktplanet['m']) $TraderError = loca("TRADER_ERROR_RES") . "<br>";
-                else if ( $crys > $aktplanet['kmax'] || $deut > $aktplanet['dmax'] ) $TraderError = loca("TRADER_ERROR_STORAGE") . "<br>";
+                if ($met > $aktplanet['m']) {
+                    $TraderError = loca('TRADER_ERROR_RES') . '<br>';
+                } elseif ($crys > $aktplanet['kmax'] || $deut > $aktplanet['dmax']) {
+                    $TraderError = loca('TRADER_ERROR_STORAGE') . '<br>';
+                }
 
-                if ( $TraderError === '' && $met > 0 ) {
-                    $query = "UPDATE ".$db_prefix."users SET trader = 0 WHERE player_id = " . $GlobalUser['player_id'];
-                    dbquery ( $query );
-                    $query = "UPDATE ".$db_prefix."planets SET m = m - '".intval($met)."', k = '".intval($crys)."', d = '".intval($deut)."' WHERE planet_id = " . $aktplanet['planet_id'];
-                    dbquery ( $query );
-                    $aktplanet = GetPlanet ( $GlobalUser['aktplanet'] );
+                if ($TraderError === '' && $met > 0) {
+                    $query = 'UPDATE ' . $db_prefix . 'users SET trader = 0 WHERE player_id = ' . $GlobalUser['player_id'];
+                    dbquery($query);
+                    $query = 'UPDATE ' . $db_prefix . "planets SET m = m - '" . intval($met) . "', k = '" . intval($crys) . "', d = '" . intval($deut) . "' WHERE planet_id = " . $aktplanet['planet_id'];
+                    dbquery($query);
+                    $aktplanet = GetPlanet($GlobalUser['aktplanet']);
                     $GlobalUser['trader'] = 0;
                 }
-            }
+            } elseif ($GlobalUser['trader'] == 2) {
+                $met = floor($aktplanet['m'] + $value_1);
+                $deut = floor($aktplanet['d'] + $value_3);
+                $crys = floor($value_1 * $GlobalUser['rate_k'] / $GlobalUser['rate_m']) +
+                        floor($value_3 * $GlobalUser['rate_k'] / $GlobalUser['rate_d']);
 
-            else if ( $GlobalUser['trader'] == 2)
-            {
-                $met = floor ( $aktplanet['m'] + $value_1 );
-                $deut = floor ( $aktplanet['d'] + $value_3 );
-                $crys = floor ( $value_1 * $GlobalUser['rate_k'] / $GlobalUser['rate_m'] ) + 
-                        floor ( $value_3 * $GlobalUser['rate_k'] / $GlobalUser['rate_d'] );
+                if ($crys > $aktplanet['k']) {
+                    $TraderError = loca('TRADER_ERROR_RES') . '<br>';
+                } elseif ($met > $aktplanet['mmax'] || $deut > $aktplanet['dmax']) {
+                    $TraderError = loca('TRADER_ERROR_STORAGE') . '<br>';
+                }
 
-                if ( $crys > $aktplanet['k']) $TraderError = loca("TRADER_ERROR_RES") . "<br>";
-                else if ( $met > $aktplanet['mmax'] || $deut > $aktplanet['dmax'] ) $TraderError = loca("TRADER_ERROR_STORAGE") . "<br>";
-
-                if ( $TraderError === '' && $crys > 0 ) {
-                    $query = "UPDATE ".$db_prefix."users SET trader = 0 WHERE player_id = " . $GlobalUser['player_id'];
-                    dbquery ( $query );
-                    $query = "UPDATE ".$db_prefix."planets SET k = k - '".intval($crys)."', m = '".intval($met)."', d = '".intval($deut)."' WHERE planet_id = " . $aktplanet['planet_id'];
-                    dbquery ( $query );
-                    $aktplanet = GetPlanet ( $GlobalUser['aktplanet'] );
+                if ($TraderError === '' && $crys > 0) {
+                    $query = 'UPDATE ' . $db_prefix . 'users SET trader = 0 WHERE player_id = ' . $GlobalUser['player_id'];
+                    dbquery($query);
+                    $query = 'UPDATE ' . $db_prefix . "planets SET k = k - '" . intval($crys) . "', m = '" . intval($met) . "', d = '" . intval($deut) . "' WHERE planet_id = " . $aktplanet['planet_id'];
+                    dbquery($query);
+                    $aktplanet = GetPlanet($GlobalUser['aktplanet']);
                     $GlobalUser['trader'] = 0;
                 }
-            }
+            } elseif ($GlobalUser['trader'] == 3) {
+                $met = floor($aktplanet['m'] + $value_1);
+                $crys = floor($aktplanet['k'] + $value_2);
+                $deut = floor($value_1 * $GlobalUser['rate_d'] / $GlobalUser['rate_m']) +
+                        floor($value_2 * $GlobalUser['rate_d'] / $GlobalUser['rate_k']);
 
-            else if ( $GlobalUser['trader'] == 3)
-            {
-                $met = floor ( $aktplanet['m'] + $value_1 );
-                $crys = floor ( $aktplanet['k'] + $value_2 );
-                $deut = floor ( $value_1 * $GlobalUser['rate_d'] / $GlobalUser['rate_m'] ) + 
-                        floor ( $value_2 * $GlobalUser['rate_d'] / $GlobalUser['rate_k'] );
+                if ($deut > $aktplanet['d']) {
+                    $TraderError .= loca('TRADER_ERROR_RES') . '<br>';
+                } elseif ($met > $aktplanet['mmax'] || $crys > $aktplanet['kmax']) {
+                    $TraderError .= loca('TRADER_ERROR_STORAGE') . '<br>';
+                }
 
-                if ( $deut > $aktplanet['d']) $TraderError .= loca("TRADER_ERROR_RES") . "<br>";
-                else if ( $met > $aktplanet['mmax'] || $crys > $aktplanet['kmax'] ) $TraderError .= loca("TRADER_ERROR_STORAGE") . "<br>";
-
-                if ( $TraderError === '' && $deut > 0 ) {
-                    $query = "UPDATE ".$db_prefix."users SET trader = 0 WHERE player_id = " . $GlobalUser['player_id'];
-                    dbquery ( $query );
-                    $query = "UPDATE ".$db_prefix."planets SET d = d - '".intval($deut)."', k = '".intval($crys)."', m = '".intval($met)."' WHERE planet_id = " . $aktplanet['planet_id'];
-                    dbquery ( $query );
-                    $aktplanet = GetPlanet ( $GlobalUser['aktplanet'] );
+                if ($TraderError === '' && $deut > 0) {
+                    $query = 'UPDATE ' . $db_prefix . 'users SET trader = 0 WHERE player_id = ' . $GlobalUser['player_id'];
+                    dbquery($query);
+                    $query = 'UPDATE ' . $db_prefix . "planets SET d = d - '" . intval($deut) . "', k = '" . intval($crys) . "', m = '" . intval($met) . "' WHERE planet_id = " . $aktplanet['planet_id'];
+                    dbquery($query);
+                    $aktplanet = GetPlanet($GlobalUser['aktplanet']);
                     $GlobalUser['trader'] = 0;
                 }
             }
 
         }
-    }
-    else        // Call a (new) merchant
-    {
-        if ( $dm < $trader_dm )
-        {
+    } else { // Call a (new) merchant
+        if ($dm < $trader_dm) {
             $not_enough = true;
-            $TraderError = loca("TRADER_ERROR_DM") . "<br>";
-        }
-        else
-        {
+            $TraderError = loca('TRADER_ERROR_DM') . '<br>';
+        } else {
             $not_enough = false;
-            CallNewTrader ();
+            CallNewTrader();
         }
     }
 
 }
 
-PageHeader ("trader");
+PageHeader('trader');
 
-function is_selected ( $a, $b )
+function is_selected($a, $b)
 {
-    if ( $a == $b ) return "selected";
-    else return "";
+    if ($a == $b) {
+        return 'selected';
+    } else {
+        return '';
+    }
 }
 
-if ( $GlobalUser['trader'] > 0 )
-{
+if ($GlobalUser['trader'] > 0) {
     $offer_id = $GlobalUser['trader'];
-    if ( $offer_id == 1) $amount = floor ($aktplanet['m']);
-    else if ( $offer_id == 2) $amount = floor ($aktplanet['k']);
-    else if ( $offer_id == 3) $amount = floor ($aktplanet['d']);
-    $mmax = max (0, $aktplanet['mmax'] - $aktplanet['m'] );
-    $kmax = max (0, $aktplanet['kmax'] - $aktplanet['k'] );
-    $dmax = max (0, $aktplanet['dmax'] - $aktplanet['d'] );
-    $storage = "0, " . $mmax . ", " . $kmax . ", " . $dmax;
-    $factor = "0, " . $GlobalUser['rate_m'] . ", " . $GlobalUser['rate_k'] . ", " . $GlobalUser['rate_d'];
+    if ($offer_id == 1) {
+        $amount = floor($aktplanet['m']);
+    } elseif ($offer_id == 2) {
+        $amount = floor($aktplanet['k']);
+    } elseif ($offer_id == 3) {
+        $amount = floor($aktplanet['d']);
+    }
+    $mmax = max(0, $aktplanet['mmax'] - $aktplanet['m']);
+    $kmax = max(0, $aktplanet['kmax'] - $aktplanet['k']);
+    $dmax = max(0, $aktplanet['dmax'] - $aktplanet['d']);
+    $storage = '0, ' . $mmax . ', ' . $kmax . ', ' . $dmax;
+    $factor = '0, ' . $GlobalUser['rate_m'] . ', ' . $GlobalUser['rate_k'] . ', ' . $GlobalUser['rate_d'];
 
-    $resname = array ( "", loca("METAL"), loca("CRYSTAL"), loca("DEUTERIUM") );
+    $resname = [ '', loca('METAL'), loca('CRYSTAL'), loca('DEUTERIUM') ];
 
-    if ( $GlobalUser['trader'] == 1 ) $ratewhat = $GlobalUser['rate_m'];
-    else if ( $GlobalUser['trader'] == 2 ) $ratewhat = $GlobalUser['rate_k'];
-    else if ( $GlobalUser['trader'] == 3 ) $ratewhat = $GlobalUser['rate_d'];
-    else $ratewhat = 1.0;
+    if ($GlobalUser['trader'] == 1) {
+        $ratewhat = $GlobalUser['rate_m'];
+    } elseif ($GlobalUser['trader'] == 2) {
+        $ratewhat = $GlobalUser['rate_k'];
+    } elseif ($GlobalUser['trader'] == 3) {
+        $ratewhat = $GlobalUser['rate_d'];
+    } else {
+        $ratewhat = 1.0;
+    }
 }
 
-BeginContent ();
+BeginContent();
 ?>
 <script>
 storage      = new Array(<?=$storage;?>);
@@ -348,38 +341,41 @@ function setMaxValue(id) {
 		<tr>
 
 <?php
-    if ( $GlobalUser['trader'] > 0 ) {
+    if ($GlobalUser['trader'] > 0) {
 
-        echo "			<td class=\"c\"align='center' >".va (loca("TRADER_AVAILABLE"), $resname[$GlobalUser['trader']] ) ."</td>\n";
+        echo "			<td class=\"c\"align='center' >" . va(loca('TRADER_AVAILABLE'), $resname[$GlobalUser['trader']]) . "</td>\n";
+    } else {
+        echo "			<td class=\"c\"align='center' >" . loca('TRADER_NOT_FOUND') . "</td>\n";
     }
-    else echo "			<td class=\"c\"align='center' >".loca("TRADER_NOT_FOUND")."</td>\n";
 ?>	
 	
 			</tr>
 		<tr>
 			<th class="c" align='center'><br>
-				<?=loca("TRADER_SELL_RES");?>				<select name="offer_id" style="color: lime;">
+				<?=loca('TRADER_SELL_RES');?>				<select name="offer_id" style="color: lime;">
 
-				  <option value="1" <?=is_selected($GlobalUser['trader'], 1);?>><?=loca("METAL");?></option>
-				  <option value="2" <?=is_selected($GlobalUser['trader'], 2);?>><?=loca("CRYSTAL");?></option>
-				  <option value="3" <?=is_selected($GlobalUser['trader'], 3);?>><?=loca("DEUTERIUM");?></option>
+				  <option value="1" <?=is_selected($GlobalUser['trader'], 1);?>><?=loca('METAL');?></option>
+				  <option value="2" <?=is_selected($GlobalUser['trader'], 2);?>><?=loca('CRYSTAL');?></option>
+				  <option value="3" <?=is_selected($GlobalUser['trader'], 3);?>><?=loca('DEUTERIUM');?></option>
 				</select>		
 				!				<br>
-				<div id='darkmatter2'><?=va(loca("TRADER_DM_COST"), $trader_dm);?></div><br><br>
+				<div id='darkmatter2'><?=va(loca('TRADER_DM_COST'), $trader_dm);?></div><br><br>
 
 <?php
-    if ( $not_enough )
-    {
-?>
+    if ($not_enough) {
+        ?>
 	<a id='darkmatter2' href='index.php?page=payment&session=<?=$session;?>' style='cursor:pointer; text-align:center;width:100px;height:60px;'>
-	<b><div id='darkmatter2'><img border="0" src="img/DMaterie.jpg" width="60" height="60"><br><?=loca("TRADER_GET_DM");?></a></b><br><br><br>
+	<b><div id='darkmatter2'><img border="0" src="img/DMaterie.jpg" width="60" height="60"><br><?=loca('TRADER_GET_DM');?></a></b><br><br><br>
 <?php
     }
 ?>
 
 <?php
-    if ( $GlobalUser['trader'] > 0 ) echo "				<input type='submit' name='call_trader' value='".loca("TRADER_CALL_ANOTHER")."'>\n";
-    else echo "				<input type='submit' name='call_trader' value='".loca("TRADER_CALL")."'>\n";
+    if ($GlobalUser['trader'] > 0) {
+        echo "				<input type='submit' name='call_trader' value='" . loca('TRADER_CALL_ANOTHER') . "'>\n";
+    } else {
+        echo "				<input type='submit' name='call_trader' value='" . loca('TRADER_CALL') . "'>\n";
+    }
 ?>
 			</th>
 		</tr>
@@ -387,128 +383,139 @@ function setMaxValue(id) {
 	<br>
 </form>	
 <?php
-    if ( $GlobalUser['trader'] > 0 )
-    {
+    if ($GlobalUser['trader'] > 0) {
 
-?>
+        ?>
 <form action="index.php?page=trader&session=<?=$session;?>" name="TraderForm" method="POST">
     <TABLE width='520px'>
         <TR>
-            <TD colspan=4 class="c" align='center'><?=loca("TRADER_EXCHANGE");?></TD>
+            <TD colspan=4 class="c" align='center'><?=loca('TRADER_EXCHANGE');?></TD>
         </TR>
         
         <TR>
             <th></th>
             <th></th>
-            <th><?=loca("TRADER_FREE_STORAGE");?></th>
-            <th><?=loca("TRADER_RATE");?></th>
+            <th><?=loca('TRADER_FREE_STORAGE');?></th>
+            <th><?=loca('TRADER_RATE');?></th>
         </TR>
         
         
         <TR>
-            <th class="c" align="center" width=25% ><?=loca("METAL");?></th>
+            <th class="c" align="center" width=25% ><?=loca('METAL');?></th>
 <?php
-    if ( $GlobalUser['trader'] == 1 ) echo "                          <th class=\"c\" align='center' width=25% ><span id=\"1_value\">0</span></th>\n";
-    else echo "                          <th class=\"c\" align='center' width=25% ><input type=\"text\" size=\"9\" name=\"1_value\" value=\"0\" style=\"text-align:right;\" onkeyup='checkValue(1);'> <a href=\"#\" onClick=\"setMaxValue(1);\">max</a></th>\n";
-?>
+            if ($GlobalUser['trader'] == 1) {
+                echo "                          <th class=\"c\" align='center' width=25% ><span id=\"1_value\">0</span></th>\n";
+            } else {
+                echo "                          <th class=\"c\" align='center' width=25% ><input type=\"text\" size=\"9\" name=\"1_value\" value=\"0\" style=\"text-align:right;\" onkeyup='checkValue(1);'> <a href=\"#\" onClick=\"setMaxValue(1);\">max</a></th>\n";
+            }
+        ?>
               <th class="c" align='center' width=25% >
 <?php
-    if ( $GlobalUser['trader'] != 1 ) echo "<span id=\"1_storage\">".nicenum($mmax)."</span>";
-    else echo "---";
-?>
+            if ($GlobalUser['trader'] != 1) {
+                echo '<span id="1_storage">' . nicenum($mmax) . '</span>';
+            } else {
+                echo '---';
+            }
+        ?>
 </th>
                         
             <th class="c" align='center' width=25% >
 <?php
-    if ( $GlobalUser['trader'] != 1 )
-    {
-?>
-                          <a href=# onmouseover="return overlib('<font color=white><?=va(loca("TRADER_EXCHANGE_INFO"), $resname[$GlobalUser['trader']], round($GlobalUser['rate_m'] / $ratewhat, 2), $resname[1] );?></font>');" onmouseout="return nd();">
+            if ($GlobalUser['trader'] != 1) {
+                ?>
+                          <a href=# onmouseover="return overlib('<font color=white><?=va(loca('TRADER_EXCHANGE_INFO'), $resname[$GlobalUser['trader']], round($GlobalUser['rate_m'] / $ratewhat, 2), $resname[1]);?></font>');" onmouseout="return nd();">
 <?php
-    }
-?>
+            }
+        ?>
                           <font size=3><b><?=$GlobalUser['rate_m'];?></b></font>
 <?php
-    if ( $GlobalUser['trader'] != 1 )
-    {
-?>
+            if ($GlobalUser['trader'] != 1) {
+                ?>
                           </a>
 <?php
-    }
-?>
+            }
+        ?>
                         </th>           
         </TR>
         
         <TR>
-            <th class="c" align="center" width=25% ><?=loca("CRYSTAL");?></th>
+            <th class="c" align="center" width=25% ><?=loca('CRYSTAL');?></th>
 <?php
-    if ( $GlobalUser['trader'] == 2 ) echo "                          <th class=\"c\" align='center' width=25% ><span id=\"2_value\">0</span></th>\n";
-    else echo "                          <th class=\"c\" align='center' width=25% ><input type=\"text\" size=\"9\" name=\"2_value\" value=\"0\" style=\"text-align:right;\" onkeyup='checkValue(2);'> <a href=\"#\" onClick=\"setMaxValue(2);\">max</a></th>\n";
-?>
+            if ($GlobalUser['trader'] == 2) {
+                echo "                          <th class=\"c\" align='center' width=25% ><span id=\"2_value\">0</span></th>\n";
+            } else {
+                echo "                          <th class=\"c\" align='center' width=25% ><input type=\"text\" size=\"9\" name=\"2_value\" value=\"0\" style=\"text-align:right;\" onkeyup='checkValue(2);'> <a href=\"#\" onClick=\"setMaxValue(2);\">max</a></th>\n";
+            }
+        ?>
               <th class="c" align='center' width=25% >
 <?php
-    if ( $GlobalUser['trader'] != 2 ) echo "<span id=\"2_storage\">".nicenum($kmax)."</span>";
-    else echo "---";
-?>
+            if ($GlobalUser['trader'] != 2) {
+                echo '<span id="2_storage">' . nicenum($kmax) . '</span>';
+            } else {
+                echo '---';
+            }
+        ?>
 </th>
                         
             <th class="c" align='center' width=25% >
 <?php
-    if ( $GlobalUser['trader'] != 2 )
-    {
-?>
-                          <a href=# onmouseover="return overlib('<font color=white><?=va(loca("TRADER_EXCHANGE_INFO"), $resname[$GlobalUser['trader']], round($GlobalUser['rate_k'] / $ratewhat, 2), $resname[2] );?></font>');" onmouseout="return nd();">
+            if ($GlobalUser['trader'] != 2) {
+                ?>
+                          <a href=# onmouseover="return overlib('<font color=white><?=va(loca('TRADER_EXCHANGE_INFO'), $resname[$GlobalUser['trader']], round($GlobalUser['rate_k'] / $ratewhat, 2), $resname[2]);?></font>');" onmouseout="return nd();">
 <?php
-    }
-?>
+            }
+        ?>
                           <font size=3><b><?=$GlobalUser['rate_k'];?></b></font>
 <?php
-    if ( $GlobalUser['trader'] != 2 )
-    {
-?>
+            if ($GlobalUser['trader'] != 2) {
+                ?>
                           </a>
 <?php
-    }
-?>
+            }
+        ?>
                         </th>           
         </TR>
         
         <TR>
-            <th class="c" align="center" width=25% ><?=loca("DEUTERIUM");?></th>
+            <th class="c" align="center" width=25% ><?=loca('DEUTERIUM');?></th>
 <?php
-    if ( $GlobalUser['trader'] == 3 ) echo "                          <th class=\"c\" align='center' width=25% ><span id=\"3_value\">0</span></th>\n";
-    else echo "                          <th class=\"c\" align='center' width=25% ><input type=\"text\" size=\"9\" name=\"3_value\" value=\"0\" style=\"text-align:right;\" onkeyup='checkValue(3);'> <a href=\"#\" onClick=\"setMaxValue(3);\">max</a></th>\n";
-?>
+            if ($GlobalUser['trader'] == 3) {
+                echo "                          <th class=\"c\" align='center' width=25% ><span id=\"3_value\">0</span></th>\n";
+            } else {
+                echo "                          <th class=\"c\" align='center' width=25% ><input type=\"text\" size=\"9\" name=\"3_value\" value=\"0\" style=\"text-align:right;\" onkeyup='checkValue(3);'> <a href=\"#\" onClick=\"setMaxValue(3);\">max</a></th>\n";
+            }
+        ?>
               <th class="c" align='center' width=25% >
 <?php
-    if ( $GlobalUser['trader'] != 3 ) echo "<span id=\"3_storage\">".nicenum($dmax)."</span>";
-    else echo "---";
-?>
+            if ($GlobalUser['trader'] != 3) {
+                echo '<span id="3_storage">' . nicenum($dmax) . '</span>';
+            } else {
+                echo '---';
+            }
+        ?>
 </th>
                         
             <th class="c" align='center' width=25% >
 <?php
-    if ( $GlobalUser['trader'] != 3 )
-    {
-?>
-                          <a href=# onmouseover="return overlib('<font color=white><?=va(loca("TRADER_EXCHANGE_INFO"), $resname[$GlobalUser['trader']], round($GlobalUser['rate_d'] / $ratewhat, 2), $resname[3] );?></font>');" onmouseout="return nd();">
+            if ($GlobalUser['trader'] != 3) {
+                ?>
+                          <a href=# onmouseover="return overlib('<font color=white><?=va(loca('TRADER_EXCHANGE_INFO'), $resname[$GlobalUser['trader']], round($GlobalUser['rate_d'] / $ratewhat, 2), $resname[3]);?></font>');" onmouseout="return nd();">
 <?php
-    }
-?>
+            }
+        ?>
                           <font size=3><b><?=$GlobalUser['rate_d'];?></b></font>
 <?php
-    if ( $GlobalUser['trader'] != 3 )
-    {
-?>
+            if ($GlobalUser['trader'] != 3) {
+                ?>
                           </a>
 <?php
-    }
-?>
+            }
+        ?>
                         </th>           
         </TR>
         
         <tr>
-        <th class="c" align="center" colspan=4 ><br><?=loca("TRADER_STORAGE_INFO");?>       <br><br><input type=submit name='trade' value='<?=loca("TRADER_EXCHANGE2");?>'>
+        <th class="c" align="center" colspan=4 ><br><?=loca('TRADER_STORAGE_INFO');?>       <br><br><input type=submit name='trade' value='<?=loca('TRADER_EXCHANGE2');?>'>
         </th>
         </tr>
     </TABLE>
@@ -518,7 +525,7 @@ function setMaxValue(id) {
 ?>
 	<br><br><br><br>
 <?php
-EndContent ();
-PageFooter ($TraderMessage, $TraderError);
-ob_end_flush ();
+EndContent();
+PageFooter($TraderMessage, $TraderError);
+ob_end_flush();
 ?>

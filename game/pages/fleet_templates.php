@@ -4,83 +4,83 @@
 
 // You are able to create standard fleets. The maximum of standard fleets is your research level "Computer Technology" plus one
 // https://board.en.ogame.gameforge.com/index.php?thread/195023-version-0-74e/
-$MAX = $GlobalUser['r'.GID_R_COMPUTER] + 1;
+$MAX = $GlobalUser['r' . GID_R_COMPUTER] + 1;
 
-loca_add ( "menu", $GlobalUser['lang'] );
-loca_add ( "fleet", $GlobalUser['lang'] );
+loca_add('menu', $GlobalUser['lang']);
+loca_add('fleet', $GlobalUser['lang']);
 
-if ( key_exists ('cp', $_GET)) SelectPlanet ($GlobalUser['player_id'], intval($_GET['cp']));
-$GlobalUser['aktplanet'] = GetSelectedPlanet ($GlobalUser['player_id']);
+if (key_exists('cp', $_GET)) {
+    SelectPlanet($GlobalUser['player_id'], intval($_GET['cp']));
+}
+$GlobalUser['aktplanet'] = GetSelectedPlanet($GlobalUser['player_id']);
 $now = time();
-UpdateQueue ( $now );
-$aktplanet = GetPlanet ( $GlobalUser['aktplanet'] );
-ProdResources ( $aktplanet, $aktplanet['lastpeek'], $now );
-UpdatePlanetActivity ( $aktplanet['planet_id'] );
-UpdateLastClick ( $GlobalUser['player_id'] );
+UpdateQueue($now);
+$aktplanet = GetPlanet($GlobalUser['aktplanet']);
+ProdResources($aktplanet, $aktplanet['lastpeek'], $now);
+UpdatePlanetActivity($aktplanet['planet_id']);
+UpdateLastClick($GlobalUser['player_id']);
 $session = $_GET['session'];
 
-$prem = PremiumStatus ($GlobalUser);
+$prem = PremiumStatus($GlobalUser);
 if (!$prem['commander']) {
-    MyGoto ("overview");
+    MyGoto('overview');
 }
 
-PageHeader ("fleet_templates");
+PageHeader('fleet_templates');
 
-if ( method() === "POST" && key_exists('mode', $_POST) && $_POST['mode'] === "save" ) {
-    $id = intval ( $_POST['template_id'] );
-    $name = SecureText ( $_POST['template_name'] );
-    $name = mb_substr ( $name, 0, 30 );
+if (method() === 'POST' && key_exists('mode', $_POST) && $_POST['mode'] === 'save') {
+    $id = intval($_POST['template_id']);
+    $name = SecureText($_POST['template_name']);
+    $name = mb_substr($name, 0, 30);
 
-    $now = time ();
+    $now = time();
 
-    if ( $id ) {    // Change
-        $query = "SELECT * FROM ".$db_prefix."template WHERE id = $id AND owner_id = " . $GlobalUser['player_id'] . " LIMIT 1";
-        $result = dbquery ( $query );
-        if ( dbrows ($result) > 0 ) {
-            $query = "UPDATE ".$db_prefix."template SET name='".$name."', date=$now";
-            foreach ( $fleetmap_nosat as $i=>$gid ) {
-                $query .= ", ship$gid ='" . intval ( $_POST['ship'][$gid] ) . "' ";
+    if ($id) {    // Change
+        $query = 'SELECT * FROM ' . $db_prefix . "template WHERE id = $id AND owner_id = " . $GlobalUser['player_id'] . ' LIMIT 1';
+        $result = dbquery($query);
+        if (dbrows($result) > 0) {
+            $query = 'UPDATE ' . $db_prefix . "template SET name='" . $name . "', date=$now";
+            foreach ($fleetmap_nosat as $i => $gid) {
+                $query .= ", ship$gid ='" . intval($_POST['ship'][$gid]) . "' ";
             }
             $query .= " WHERE id = $id";
-            dbquery ( $query );
+            dbquery($query);
         }
-    }
-    else {    // Add
+    } else {    // Add
         // Limit the amount.
-        $query = "SELECT * FROM ".$db_prefix."template WHERE owner_id = " . $GlobalUser['player_id'] ;
-        $result = dbquery ( $query );
-        $rows = dbrows ( $result );
+        $query = 'SELECT * FROM ' . $db_prefix . 'template WHERE owner_id = ' . $GlobalUser['player_id'] ;
+        $result = dbquery($query);
+        $rows = dbrows($result);
 
-        if ( $rows < $MAX )
-        {
-            $temp = array ( null, $GlobalUser['player_id'], $name, $now,
-                intval ( $_POST['ship'][202] ), 
-                intval ( $_POST['ship'][203] ), 
-                intval ( $_POST['ship'][204] ), 
-                intval ( $_POST['ship'][205] ), 
-                intval ( $_POST['ship'][206] ), 
-                intval ( $_POST['ship'][207] ), 
-                intval ( $_POST['ship'][208] ), 
-                intval ( $_POST['ship'][209] ), 
-                intval ( $_POST['ship'][210] ), 
-                intval ( $_POST['ship'][211] ), 
-                0, 
-                intval ( $_POST['ship'][213] ), 
-                intval ( $_POST['ship'][214] ), 
-                intval ( $_POST['ship'][215] ), 
-            );
-            AddDBRow ( $temp, 'template' );
+        if ($rows < $MAX) {
+            $temp = [ null, $GlobalUser['player_id'], $name, $now,
+                intval($_POST['ship'][202]),
+                intval($_POST['ship'][203]),
+                intval($_POST['ship'][204]),
+                intval($_POST['ship'][205]),
+                intval($_POST['ship'][206]),
+                intval($_POST['ship'][207]),
+                intval($_POST['ship'][208]),
+                intval($_POST['ship'][209]),
+                intval($_POST['ship'][210]),
+                intval($_POST['ship'][211]),
+                0,
+                intval($_POST['ship'][213]),
+                intval($_POST['ship'][214]),
+                intval($_POST['ship'][215]),
+            ];
+            AddDBRow($temp, 'template');
         }
     }
 }
 
-if ( method () === "GET" && key_exists('mode', $_GET) && $_GET['mode'] === "delete" ) {    // Delete
-    $id = intval ( $_GET['id'] );
-    $query = "SELECT * FROM ".$db_prefix."template WHERE id = $id AND owner_id = " . $GlobalUser['player_id'] . " LIMIT 1";
-    $result = dbquery ( $query );
-    if ( dbrows ($result) > 0 ) {
-        $query = "DELETE FROM ".$db_prefix."template WHERE id = $id";
-        dbquery ( $query );
+if (method() === 'GET' && key_exists('mode', $_GET) && $_GET['mode'] === 'delete') {    // Delete
+    $id = intval($_GET['id']);
+    $query = 'SELECT * FROM ' . $db_prefix . "template WHERE id = $id AND owner_id = " . $GlobalUser['player_id'] . ' LIMIT 1';
+    $result = dbquery($query);
+    if (dbrows($result) > 0) {
+        $query = 'DELETE FROM ' . $db_prefix . "template WHERE id = $id";
+        dbquery($query);
     }
 }
 
@@ -116,20 +116,19 @@ BeginContent();
         <center>
         <table style='cellpadding=5px;' border=0>
         <tr>
-            <td class='c' colspan=4 width=517 ><?=va(loca("FLEET_TEMP_TITLE_MAX"), $MAX);?></td>
+            <td class='c' colspan=4 width=517 ><?=va(loca('FLEET_TEMP_TITLE_MAX'), $MAX);?></td>
         </tr>
         <tr>
-            <th width=60 >#</th><th  width=267 ><?=loca("FLEET_TEMP_NAME");?><th><?=loca("FLEET_TEMP_UPDATE");?></th><th><?=loca("FLEET_TEMP_DELETE");?></th>
+            <th width=60 >#</th><th  width=267 ><?=loca('FLEET_TEMP_NAME');?><th><?=loca('FLEET_TEMP_UPDATE');?></th><th><?=loca('FLEET_TEMP_DELETE');?></th>
         </tr>
 <?php
-    $query = "SELECT * FROM ".$db_prefix."template WHERE owner_id = ".$GlobalUser['player_id']." ORDER BY date DESC LIMIT $MAX";
-    $result = dbquery ( $query );
-    $rows = dbrows ( $result );
-    $count = 1;
-    while ( $rows-- )
-    {
-        $temp = dbarray ( $result );
-?>
+    $query = 'SELECT * FROM ' . $db_prefix . 'template WHERE owner_id = ' . $GlobalUser['player_id'] . " ORDER BY date DESC LIMIT $MAX";
+$result = dbquery($query);
+$rows = dbrows($result);
+$count = 1;
+while ($rows--) {
+    $temp = dbarray($result);
+    ?>
                 <tr>
             <th><?php echo $count;?></th><th width=160 ><a href=# onclick="show_input(<?php echo $temp['id'];?>,'<?php echo $temp['name'];?>',
             <?php echo $temp['ship202'];?>,<?php echo $temp['ship203'];?>,<?php echo $temp['ship204'];?>,<?php echo $temp['ship205'];?>,<?php echo $temp['ship206'];?>,
@@ -142,31 +141,31 @@ BeginContent();
             <th width=80 ><a href=index.php?page=fleet_templates&session=<?php echo $session;?>&mode=delete&id=<?php echo $temp['id'];?> >X</a></th>
         </tr>
 <?php
-        $count++;
-    }
+            $count++;
+}
 ?>
-                <th colspan=4 align=center ><input type=button name=send value='<?=loca("FLEET_TEMP_CREATE");?>' onclick="show_input(0,'',0,0,0,0,0,0,0,0,0,0,0,0,0,0)"></th>
+                <th colspan=4 align=center ><input type=button name=send value='<?=loca('FLEET_TEMP_CREATE');?>' onclick="show_input(0,'',0,0,0,0,0,0,0,0,0,0,0,0,0,0)"></th>
                 </table>
         <br>
         <div id='input_field' style='visibility:hidden;'>
         <form action='index.php?page=fleet_templates&session=<?php echo $session;?>' method="POST">
         <input type="hidden" name=mode value=save >
         <table style='cellpadding=5px;' border=0>
-        <tr><td class='c' colspan=2 width=517 ><?=loca("FLEET_TEMP_CREATE");?></td></tr>
+        <tr><td class='c' colspan=2 width=517 ><?=loca('FLEET_TEMP_CREATE');?></td></tr>
         <tr>
-        <th><?=loca("FLEET_TEMP_NAME");?></th>
+        <th><?=loca('FLEET_TEMP_NAME');?></th>
         <th><input name='template_name' size=20 >
         <input type=hidden name='template_id' size=6></th>
         </tr>
 <?php
-    foreach ( $fleetmap_nosat as $i=>$gid ) {
+    foreach ($fleetmap_nosat as $i => $gid) {
         echo "                <tr>\n";
-        echo "        <th>".loca("NAME_$gid")."</th>\n";
+        echo '        <th>' . loca("NAME_$gid") . "</th>\n";
         echo "        <th><input name='ship[$gid]' size=3></th>\n";
         echo "        </tr>\n";
     }
 ?>
-                        <th colspan=4 align=center ><input type=submit name=send value='<?=loca("FLEET_TEMP_SAVE");?>'></th>
+                        <th colspan=4 align=center ><input type=submit name=send value='<?=loca('FLEET_TEMP_SAVE');?>'></th>
         </tr>
         </form>
 
@@ -174,7 +173,7 @@ BeginContent();
         </div>
 <br><br><br><br>
 <?php
-EndContent ();
-PageFooter ();
-ob_end_flush ();
+EndContent();
+PageFooter();
+ob_end_flush();
 ?>

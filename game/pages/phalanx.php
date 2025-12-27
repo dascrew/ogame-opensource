@@ -2,22 +2,24 @@
 
 $PhalanxCost = 5000;    // Amount of deuterium per phalanx scan
 
-loca_add ( "menu", $GlobalUser['lang'] );
-loca_add ( "fleetorder", $GlobalUser['lang'] );
-loca_add ( "events", $GlobalUser['lang'] );
-loca_add ( "phalanx", $GlobalUser['lang'] );
+loca_add('menu', $GlobalUser['lang']);
+loca_add('fleetorder', $GlobalUser['lang']);
+loca_add('events', $GlobalUser['lang']);
+loca_add('phalanx', $GlobalUser['lang']);
 
-if ( key_exists ('cp', $_GET)) SelectPlanet ($GlobalUser['player_id'], intval($_GET['cp']));
-$GlobalUser['aktplanet'] = GetSelectedPlanet ($GlobalUser['player_id']);
+if (key_exists('cp', $_GET)) {
+    SelectPlanet($GlobalUser['player_id'], intval($_GET['cp']));
+}
+$GlobalUser['aktplanet'] = GetSelectedPlanet($GlobalUser['player_id']);
 $now = time();
-UpdateQueue ( $now );
-$aktplanet = GetPlanet ( $GlobalUser['aktplanet'] );
-ProdResources ( $aktplanet, $aktplanet['lastpeek'], $now );
-UpdatePlanetActivity ( $aktplanet['planet_id'] );
-UpdateLastClick ( $GlobalUser['player_id'] );
+UpdateQueue($now);
+$aktplanet = GetPlanet($GlobalUser['aktplanet']);
+ProdResources($aktplanet, $aktplanet['lastpeek'], $now);
+UpdatePlanetActivity($aktplanet['planet_id']);
+UpdateLastClick($GlobalUser['player_id']);
 $session = $_GET['session'];
 
-require_once "phalanx_events.php";
+require_once 'phalanx_events.php';
 
 ?>
 <html>
@@ -30,7 +32,7 @@ require_once "phalanx_events.php";
 
 <link rel="stylesheet" type="text/css" href="css/combox.css">
 
-<title><?=va(loca("PAGE_TITLE"), $GlobalUni['num']);?></title>
+<title><?=va(loca('PAGE_TITLE'), $GlobalUni['num']);?></title>
 
   <script src="js/utilities.js" type="text/javascript"></script>
   <script language="JavaScript">
@@ -55,23 +57,26 @@ require_once "phalanx_events.php";
 <table width="519">
  <tr>
   <td class="c" colspan="4">
-<?=loca("PHALANX_REPORT");?> <a href="javascript:showGalaxy(<?=$aktplanet['g'];?>,<?=$aktplanet['s'];?>,<?=$aktplanet['p'];?>)" >[<?=$aktplanet['g'];?>:<?=$aktplanet['s'];?>:<?=$aktplanet['p'];?>]</a> (<?=$GlobalUser['oname'];?>)  </td>
+<?=loca('PHALANX_REPORT');?> <a href="javascript:showGalaxy(<?=$aktplanet['g'];?>,<?=$aktplanet['s'];?>,<?=$aktplanet['p'];?>)" >[<?=$aktplanet['g'];?>:<?=$aktplanet['s'];?>:<?=$aktplanet['p'];?>]</a> (<?=$GlobalUser['oname'];?>)  </td>
 
  </tr>
  <tr>
-  <td colspan="4" class="c"><?=loca("PHALANX_EVENTS");?></td>
+  <td colspan="4" class="c"><?=loca('PHALANX_EVENTS');?></td>
  </tr>
 
 <?php
 
-    $target = GetPlanet ( intval($_GET['spid']) );
+    $target = GetPlanet(intval($_GET['spid']));
 
-    $outofrange = false;                    // Check the radius of the phalanx
-    if ( $aktplanet['g'] != $target['g'] || $aktplanet["b".GID_B_PHALANX] <= 0 )  $outofrange = true;
-    else {
-        $range = $aktplanet["b".GID_B_PHALANX] * $aktplanet["b".GID_B_PHALANX] - 1;
-        if ( abs($aktplanet['s'] - $target['s']) > $range) $outofrange = true;
+$outofrange = false;                    // Check the radius of the phalanx
+if ($aktplanet['g'] != $target['g'] || $aktplanet['b' . GID_B_PHALANX] <= 0) {
+    $outofrange = true;
+} else {
+    $range = $aktplanet['b' . GID_B_PHALANX] * $aktplanet['b' . GID_B_PHALANX] - 1;
+    if (abs($aktplanet['s'] - $target['s']) > $range) {
+        $outofrange = true;
     }
+}
 
 /*
     if ( $GlobalUser['vacation'] )            // The player is in vacation mode.
@@ -81,34 +86,27 @@ require_once "phalanx_events.php";
     else
 */
 
-    if ( $aktplanet["b42"] <= 0 )        // Attempting a phalanx scan from a planet or another moon without a phalanx
-    {
-        echo "<font color=#FF0000>".loca("PHALANX_ERR_MISSING")."</font>";
-    }
-    else if ( $aktplanet["d"] < $PhalanxCost )        // Not enough deuterium
-    {
-        echo "<font color=#FF0000>".loca("PHALANX_ERR_DEUT")."</font>";
-    }
-    else if (                                        // Cheating attempt
-        $target['owner_id'] == $GlobalUser['player_id']         ||          // scan of your planets
-        $aktplanet['owner_id'] != $GlobalUser['player_id']      ||         // scan from foreign moon/planet
-        !( ( $target['type'] > PTYP_MOON && $target['type'] < PTYP_DF ) || $target['type'] == PTYP_DEST_PLANET )   ||           // scan NOT (of a planet or a destroyed planet)
-        $outofrange                                                                        // scan beyond the radius of the phalanx.
-    )        
-    {
-        // Issue an automatic ban without an VM for an hour.
+if ($aktplanet['b42'] <= 0) {        // Attempting a phalanx scan from a planet or another moon without a phalanx
+    echo '<font color=#FF0000>' . loca('PHALANX_ERR_MISSING') . '</font>';
+} elseif ($aktplanet['d'] < $PhalanxCost) {        // Not enough deuterium
+    echo '<font color=#FF0000>' . loca('PHALANX_ERR_DEUT') . '</font>';
+} elseif (                                        // Cheating attempt
+    $target['owner_id'] == $GlobalUser['player_id'] ||          // scan of your planets
+    $aktplanet['owner_id'] != $GlobalUser['player_id'] ||         // scan from foreign moon/planet
+    !(($target['type'] > PTYP_MOON && $target['type'] < PTYP_DF) || $target['type'] == PTYP_DEST_PLANET) ||           // scan NOT (of a planet or a destroyed planet)
+    $outofrange                                                                        // scan beyond the radius of the phalanx.
+) {
+    // Issue an automatic ban without an VM for an hour.
 
-        echo "<font color=#FF0000>".loca("PHALANX_ERR_CHEATER")."</font>";
-    }
-    else
-    {
-        PhalanxEventList ($target['planet_id']);
+    echo '<font color=#FF0000>' . loca('PHALANX_ERR_CHEATER') . '</font>';
+} else {
+    PhalanxEventList($target['planet_id']);
 
-        // Write off phalanx cost deuterium.
-        $aktplanet['d'] -= $PhalanxCost;
-        $query = "UPDATE ".$db_prefix."planets SET d = '".$aktplanet['d']."', lastpeek = '".$now."' WHERE planet_id = " . $aktplanet['planet_id'];
-        dbquery ($query);
-    }
+    // Write off phalanx cost deuterium.
+    $aktplanet['d'] -= $PhalanxCost;
+    $query = 'UPDATE ' . $db_prefix . "planets SET d = '" . $aktplanet['d'] . "', lastpeek = '" . $now . "' WHERE planet_id = " . $aktplanet['planet_id'];
+    dbquery($query);
+}
 
 ?></table>
 
@@ -117,5 +115,5 @@ require_once "phalanx_events.php";
  </body>
 </html>
 <?php
-ob_end_flush ();
+ob_end_flush();
 ?>
