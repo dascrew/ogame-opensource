@@ -264,13 +264,26 @@ function buildStorage(array $aktplanet): int
  * Checks if the build queue is empty, iterates through upgrade priorities, and determines
  * the most needed building based on defined ratios. Initiates the build process for speed.
  *
- * @param array<string, mixed> $aktplanet   The current planet's data, must include 'planet_id'.
- * @param array<string, mixed> $personality The bot's personality configuration, including upgrade priorities and ratios.
+ * @param array<string, mixed> $aktplanet The current planet's data, must include 'planet_id'.
  * @return int Delay in seconds before next attempt
  */
-function buildFromPersonality(array $aktplanet, array $personality): int
+function buildFromPersonality(array $aktplanet): int
 {
+    global $BotID;
     $delay = rand(10, 30);
+
+    // Load personality configuration
+    $personalityName = BotGetVar('personality', '');
+    if (empty($personalityName)) {
+        BotDebug("No personality set for bot", 'WARNING');
+        return $delay;
+    }
+    
+    $personality = loadPersonalityConfig($personalityName);
+    if (!$personality) {
+        BotDebug("Failed to load personality config: {$personalityName}", 'ERROR');
+        return $delay;
+    }
 
     // If a building is already in progress, wait until it finishes
     if (getBuildingFinishTime($aktplanet['planet_id'])) {
@@ -300,15 +313,27 @@ function buildFromPersonality(array $aktplanet, array $personality): int
  * Checks if the research queue is empty, iterates through upgrade priorities, and determines
  * the most needed research based on defined ratios. Initiates the research process.
  *
- * @param array<string, mixed> $aktplanet   The current planet's data, must include 'owner_id'.
- * @param array<string, mixed> $personality The bot's personality configuration, including upgrade priorities and ratios.
+ * @param array<string, mixed> $aktplanet The current planet's data, must include 'owner_id'.
  * @return int Delay in seconds before next attempt
  */
-function researchFromPersonality(array $aktplanet, array $personality): int
+function researchFromPersonality(array $aktplanet): int
 {
     global $BotID, $BotNow;
 
     $delay = rand(10, 30);
+
+    // Load personality configuration
+    $personalityName = BotGetVar('personality', '');
+    if (empty($personalityName)) {
+        BotDebug("No personality set for bot", 'WARNING');
+        return $delay;
+    }
+    
+    $personality = loadPersonalityConfig($personalityName);
+    if (!$personality) {
+        BotDebug("Failed to load personality config: {$personalityName}", 'ERROR');
+        return $delay;
+    }
 
     if (getResearchFinishTime($aktplanet['owner_id'])) {
         return getResearchFinishTime($aktplanet['owner_id']) - $BotNow + $delay;

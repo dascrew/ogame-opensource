@@ -271,3 +271,27 @@ function botGetPersonality()
     global $BotID;
     return BotGetVar($BotID, 'personality');
 }
+
+function loadPersonalityConfig($personalityName)
+{
+    if (empty($personalityName)) {
+        return null;
+    }
+
+    $personalityFile = __DIR__ . "/../personalities/{$personalityName}.php";
+    
+    if (!file_exists($personalityFile)) {
+        BotDebug("Personality file not found: {$personalityFile}", 'ERROR');
+        return null;
+    }
+    
+    $config = include $personalityFile;
+    
+    if (!is_array($config)) {
+        BotDebug("Invalid personality config in: {$personalityFile}", 'ERROR');
+        return null;
+    }
+    
+    BotDebug("Loaded personality config: {$personalityName}", 'INFO');
+    return $config;
+}
