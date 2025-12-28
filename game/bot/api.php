@@ -228,7 +228,7 @@ function BotCanResearch($obj_id)
     $aktplanet = GetPlanet($user['aktplanet']);
     ProdResources($aktplanet, $aktplanet['lastpeek'], $BotNow);
     $rkey = 'r' . $obj_id;
-    $level = (isset($aktplanet[$rkey]) ? $aktplanet[$rkey] : 0) + 1;
+    $level = $user[$rkey] + 1;
     $text = CanResearch($user, $aktplanet, $obj_id, $level);
     return $text === '';
 }
@@ -241,7 +241,7 @@ function BotResearch($obj_id)
     $user = LoadUser($BotID);
     $aktplanet = GetPlanet($user['aktplanet']);
     $rkey = 'r' . $obj_id;
-    $level = (isset($aktplanet[$rkey]) ? $aktplanet[$rkey] : 0) + 1;
+    $level = $user[$rkey] + 1;
     $text = StartResearch($user['player_id'], $user['aktplanet'], $obj_id, 0);
     $bot_now = 0;
     if ($text === '') {
