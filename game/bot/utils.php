@@ -129,7 +129,7 @@ function getMostNeededUpgrade($ratios)
         if (isResearch($gid)) {
             $currentLevel = BotGetResearch($gid);
         } else {
-            $currentLevel = BotGetBuild($gid, $planet);
+            $currentLevel = BotGetBuild($gid);
         }
         $need = $ratio / ($currentLevel + 1);
         if ($need > $maxNeed) {
