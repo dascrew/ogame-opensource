@@ -4,9 +4,8 @@ This is revived OGame v 0.84 with old design.
 
 Note: This fork has some differences 
  - tested against PHP 8.*
- - type safety in some files
- - restructuring of logic for consolidation
-
+ - expanded AI
+   
 Need help with installation? Ask the community for help.
 Discord: https://discord.gg/xpCV3McAj2
 
