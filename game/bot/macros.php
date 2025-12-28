@@ -449,7 +449,6 @@ function researchBase(array $aktplanet): int
 
     foreach ($targets as $gid => $level) {
         if (BotGetResearch($gid) < $level && BotCanResearch($gid)) {
-            BotResearch($gid);
             return upgradeAndWait($gid);
         }
     }

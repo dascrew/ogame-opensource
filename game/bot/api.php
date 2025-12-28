@@ -249,7 +249,7 @@ function BotResearch($obj_id)
         if ($bot_now == 0) {
             $bot_now = time();
         }
-        $reslab = ResearchNetwork($user['planet_id'], $obj_id);
+        $reslab = ResearchNetwork($user['player_id'], $obj_id);
         $prem = PremiumStatus($user);
         if ($prem['technocrat']) {
             $r_factor = 1.1;
@@ -268,8 +268,7 @@ function BotResearch($obj_id)
 // Retrieve the bot's personality from the botvars table
 function botGetPersonality()
 {
-    global $BotID;
-    return BotGetVar($BotID, 'personality');
+    return BotGetVar('personality');
 }
 
 function loadPersonalityConfig($personalityName)
