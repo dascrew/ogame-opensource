@@ -129,7 +129,7 @@ function getMostNeededUpgrade($ratios)
         if (isResearch($gid)) {
             $currentLevel = BotGetResearch($gid);
         } else {
-            $currentLevel = BotGetBuild($gid, $planet);
+            $currentLevel = BotGetBuild($gid);
         }
         $need = $ratio / ($currentLevel + 1);
         if ($need > $maxNeed) {
@@ -175,17 +175,17 @@ function upgradeAndWait(mixed $gid): int
     $delay = rand(10, 150);
     $finish = null;
 
-    // Get the active planet for finish time checking
+    // Get the active planet and player ID for finish time checking
     $user = LoadUser($BotID);
     $activePlanetId = $user['aktplanet'];
+    $playerId = $user['player_id'];
 
     if (isBuilding($gid)) {
         BotBuild($gid);
         $finish = getBuildingFinishTime($activePlanetId);
     } elseif (isResearch($gid)) {
-
         BotResearch($gid);
-        $finish = getResearchFinishTime($activePlanetId);
+        $finish = getResearchFinishTime($playerId);
     }
 
     if ($finish) {
