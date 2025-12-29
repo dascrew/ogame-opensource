@@ -56,30 +56,13 @@ function hasAllPersonalityShips($botID)
 {
     $user = LoadUser($botID);
     $planet = GetPlanet($user['aktplanet']);
-    
-    // Load personality configuration
-    $personalityName = GetVar($botID, 'personality', '');
-    if (empty($personalityName)) {
-        BotDebug("No personality set for bot {$botID}", 'WARNING');
-        return false;
-    }
-    
-    $personality = loadPersonalityConfig($personalityName);
-    if (!$personality || !isset($personality['ships']['ratios'])) {
-        BotDebug("Failed to load personality config or no ships defined: {$personalityName}", 'ERROR');
+    $personality = BotGetVar('personality', []);
+
+    if (empty($personality) || !isset($personality['ships'])) {
         return false;
     }
 
-    // Extract all ship GIDs from the nested ratios structure
-    $allShips = [];
-    foreach ($personality['ships']['ratios'] as $subcategory => $ships) {
-        foreach ($ships as $shipGID => $ratio) {
-            $allShips[] = $shipGID;
-        }
-    }
-
-    // Check if all ships are unlocked
-    foreach ($allShips as $shipGID) {
+    foreach ($personality['ships'] as $shipGID) {
         $result = checkRequirements($shipGID, $user, $planet);
         if (!$result['met']) {
             return false;
@@ -98,7 +81,15 @@ function shouldIdle($botID = null)
     if (!BotEnergyAbove(0) && !BotCanBuild(GID_B_SOLAR)) {
         return true;
     }
-    if (GetBuildQueue($aktplanet['planet_id']) && GetResearchQueue($aktplanet['planet_id'])) {
+    
+    // Check if both build queue and research queue have active items
+    $buildQueueResult = GetBuildQueue($aktplanet['planet_id']);
+    $researchQueueResult = GetResearchQueue($aktplanet['planet_id']);
+    
+    $hasBuildQueue = $buildQueueResult && dbrows($buildQueueResult) > 0;
+    $hasResearchQueue = $researchQueueResult && dbrows($researchQueueResult) > 0;
+    
+    if ($hasBuildQueue && $hasResearchQueue) {
         return true;
     }
     return false;
