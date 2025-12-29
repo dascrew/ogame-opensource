@@ -249,7 +249,7 @@ function BotResearch($obj_id)
         if ($bot_now == 0) {
             $bot_now = time();
         }
-        $reslab = ResearchNetwork($user['player_id'], $obj_id);
+        $reslab = ResearchNetwork($user['aktplanet'], $obj_id);
         $prem = PremiumStatus($user);
         if ($prem['technocrat']) {
             $r_factor = 1.1;

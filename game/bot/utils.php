@@ -178,7 +178,7 @@ function upgradeAndWait(mixed $gid): int
     // Get the active planet and player ID for finish time checking
     $user = LoadUser($BotID);
     $activePlanetId = $user['aktplanet'];
-    $playerId = $user['id'];
+    $playerId = $user['player_id'];
 
     if (isBuilding($gid)) {
         BotBuild($gid);
