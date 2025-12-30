@@ -56,14 +56,14 @@ function hasAllPersonalityShips($botID)
 {
     $user = LoadUser($botID);
     $planet = GetPlanet($user['aktplanet']);
-    
+
     // Load personality configuration
     $personalityName = GetVar($botID, 'personality', '');
     if (empty($personalityName)) {
         BotDebug("No personality set for bot {$botID}", 'WARNING');
         return false;
     }
-    
+
     $personality = loadPersonalityConfig($personalityName);
     if (!$personality || !isset($personality['ships']['ratios'])) {
         BotDebug("Failed to load personality config or no ships defined: {$personalityName}", 'ERROR');
@@ -98,7 +98,16 @@ function shouldIdle($botID = null)
     if (!BotEnergyAbove(0) && !BotCanBuild(GID_B_SOLAR)) {
         return true;
     }
-    if (GetBuildQueue($aktplanet['planet_id']) && GetResearchQueue($aktplanet['planet_id'])) {
+    
+    // Check if both build queue and research queue have active items
+    $buildQueueResult = GetBuildQueue($aktplanet['planet_id']);
+    $player_id = isset($user['player_id']) && is_numeric($user['player_id']) ? (int)$user['player_id'] : null;
+    $researchQueueResult = $player_id !== null ? GetResearchQueue($player_id) : false;
+    
+    $hasBuildQueue = $buildQueueResult && dbrows($buildQueueResult) > 0;
+    $hasResearchQueue = $researchQueueResult && dbrows($researchQueueResult) > 0;
+    
+    if ($hasBuildQueue && $hasResearchQueue) {
         return true;
     }
     return false;
@@ -123,11 +132,6 @@ function canCoverExpeditionCost()
     $deut_cost = FlightCons($ships, $distance, $flighttime, $user['r115'], $user['r117'], $user['r118'], 1)['fleet'];
     return $planet['d'] >= $deut_cost;
 }
-
-/**
- * Storage check: use canonical `isStorageFull` from `game/prod.php`.
- * This file should rely on the implementation in `game/prod.php`.
- */
 
 /**
  * Check if a building or research is at or above a certain level.
