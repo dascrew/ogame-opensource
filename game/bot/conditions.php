@@ -56,13 +56,30 @@ function hasAllPersonalityShips($botID)
 {
     $user = LoadUser($botID);
     $planet = GetPlanet($user['aktplanet']);
-    $personality = BotGetVar('personality', []);
 
-    if (empty($personality) || !isset($personality['ships'])) {
+    // Load personality configuration
+    $personalityName = GetVar($botID, 'personality', '');
+    if (empty($personalityName)) {
+        BotDebug("No personality set for bot {$botID}", 'WARNING');
         return false;
     }
 
-    foreach ($personality['ships'] as $shipGID) {
+    $personality = loadPersonalityConfig($personalityName);
+    if (!$personality || !isset($personality['ships']['ratios'])) {
+        BotDebug("Failed to load personality config or no ships defined: {$personalityName}", 'ERROR');
+        return false;
+    }
+
+    // Extract all ship GIDs from the nested ratios structure
+    $allShips = [];
+    foreach ($personality['ships']['ratios'] as $subcategory => $ships) {
+        foreach ($ships as $shipGID => $ratio) {
+            $allShips[] = $shipGID;
+        }
+    }
+
+    // Check if all ships are unlocked
+    foreach ($allShips as $shipGID) {
         $result = checkRequirements($shipGID, $user, $planet);
         if (!$result['met']) {
             return false;
