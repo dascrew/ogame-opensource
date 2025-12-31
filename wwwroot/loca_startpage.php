@@ -800,6 +800,7 @@ Soruyorsundur kendine bunu sana niye anlattigimi. Söyle desem: Sana burada beni
 // Start page language
 if (!isset($_COOKIE['ogamelang'])) {
     $LocaLang = 'en';
+    setcookie('ogamelang', 'en', time() + (9999 * 24 * 60 * 60), '/');
 } else {
     $LocaLang = $_COOKIE['ogamelang'];
 }
